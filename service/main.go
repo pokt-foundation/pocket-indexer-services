@@ -145,7 +145,7 @@ func (s *service) getFromHeight(maxSavedHeight int64, getMaxHeightErr error) int
 		return s.fromHeight
 	}
 
-	// This error means nothing has be saved in the database and should start indexing from 0
+	// This error means nothing was saved in the database and it should start indexing from 0
 	if errors.Is(getMaxHeightErr, postgresdriver.ErrNoPreviousHeight) {
 		return 0
 	}
