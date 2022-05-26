@@ -61,7 +61,7 @@ type service struct {
 	indexer     indexer
 	provider    provider
 	driver      driver
-	isCustom    bool
+	hasEnd      bool
 	fromHeight  int
 	toHeight    int
 	retries     int64
@@ -84,7 +84,7 @@ func newService(retries, concurrency int64, reqInterval time.Duration, provider 
 			return nil, errToHeightLowerThanFromHeight
 		}
 
-		service.isCustom = true
+		service.hasEnd = true
 		service.fromHeight = options.fromHeight
 		service.toHeight = options.toHeight
 	}
@@ -101,8 +101,7 @@ func (s *service) start() error {
 
 		s.indexHeights(heightsToIndex)
 
-		// Just custom indexer should stop, the other ones keep looking if a new blocks comes up to index it
-		if s.isCustom {
+		if s.hasEnd {
 			break
 		}
 
@@ -125,7 +124,7 @@ func (s *service) getHeightsToIndex() ([]int, error) {
 		return nil, err
 	}
 
-	if s.isCustom && s.toHeight > currentHeight {
+	if s.hasEnd && s.toHeight > currentHeight {
 		return nil, errInputHeightIsHigherThanCurrentHeight
 	}
 
@@ -141,7 +140,7 @@ func (s *service) getHeightsToIndex() ([]int, error) {
 }
 
 func (s *service) getFromHeight(maxSavedHeight int64, getMaxHeightErr error) int {
-	if s.isCustom {
+	if s.hasEnd {
 		return s.fromHeight
 	}
 
@@ -154,7 +153,7 @@ func (s *service) getFromHeight(maxSavedHeight int64, getMaxHeightErr error) int
 }
 
 func (s *service) getToHeight(currentHeight int) int {
-	if s.isCustom {
+	if s.hasEnd {
 		return s.toHeight
 	}
 
