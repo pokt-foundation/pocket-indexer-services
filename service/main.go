@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"os"
-	"strconv"
+	"flag"
 	"sync"
 	"time"
 
@@ -19,8 +18,8 @@ var (
 	errToHeightLowerThanFromHeight          = errors.New("to height is lower than from height")
 	errInputHeightIsHigherThanCurrentHeight = errors.New("input height is higher than current height")
 
-	indexingProcesses  sync.WaitGroup
-	concurrencyLimiter *semaphore.Weighted
+	indexingProcesses sync.WaitGroup
+	semaphoreLimiter  *semaphore.Weighted
 
 	clientTimeout    = environment.GetInt64("CLIENT_TIMEOUT", 60000)
 	clientRetries    = environment.GetInt64("CLIENT_RETRIES", 3)
@@ -41,6 +40,7 @@ type provider interface {
 	GetBlock(blockNumber int) (*providerlib.GetBlockOutput, error)
 	GetBlockTransactions(blockHeight int, options *providerlib.GetBlockTransactionsOptions) (*providerlib.GetBlockTransactionsOutput, error)
 	GetBlockHeight() (int, error)
+	UpdateRequestConfig(retries int, timeout time.Duration)
 }
 
 // driver interface of needed functions for the db driver
@@ -58,38 +58,17 @@ type indexOptions struct {
 
 // service struct handler for all necessary fiels for indexing
 type service struct {
-	indexer     indexer
-	provider    provider
-	driver      driver
-	hasEnd      bool
-	fromHeight  int
-	toHeight    int
-	retries     int64
-	concurrency int64
-	reqInterval time.Duration
-}
-
-func newService(retries, concurrency int64, reqInterval time.Duration, provider provider, driver driver, indexer indexer, options *indexOptions) (*service, error) {
-	service := &service{
-		indexer:     indexer,
-		provider:    provider,
-		driver:      driver,
-		retries:     retries,
-		concurrency: concurrency,
-		reqInterval: reqInterval,
-	}
-
-	if options != nil {
-		if options.toHeight < options.fromHeight {
-			return nil, errToHeightLowerThanFromHeight
-		}
-
-		service.hasEnd = true
-		service.fromHeight = options.fromHeight
-		service.toHeight = options.toHeight
-	}
-
-	return service, nil
+	indexer          indexer
+	fallbackIndexer  indexer
+	provider         provider
+	fallbackProvider provider
+	driver           driver
+	hasEnd           bool
+	fromHeight       int
+	toHeight         int
+	retries          int64
+	concurrency      int64
+	reqInterval      time.Duration
 }
 
 func (s *service) start() error {
@@ -121,7 +100,10 @@ func (s *service) getHeightsToIndex() ([]int, error) {
 
 	currentHeight, err := s.provider.GetBlockHeight()
 	if err != nil {
-		return nil, err
+		currentHeight, err = s.fallbackProvider.GetBlockHeight()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if s.hasEnd && s.toHeight > currentHeight {
@@ -165,18 +147,18 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 		return nil
 	}
 
-	concurrencyLimiter = semaphore.NewWeighted(s.concurrency)
+	semaphoreLimiter = semaphore.NewWeighted(s.concurrency)
 
 	for _, height := range heightsToIndex {
 		indexingProcesses.Add(2)
 
-		err := concurrencyLimiter.Acquire(context.Background(), 2)
+		err := semaphoreLimiter.Acquire(context.Background(), 2)
 		if err != nil {
 			return err
 		}
 
-		go s.indexBlockWithRetries(height)
-		go s.indexBlockTransactionsWithRetries(height)
+		go s.indexBlock(height)
+		go s.indexBlockTransactions(height)
 	}
 
 	indexingProcesses.Wait()
@@ -184,9 +166,13 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 	return nil
 }
 
-func (s *service) indexBlockWithRetries(height int) {
-	defer indexingProcesses.Done()
-	defer concurrencyLimiter.Release(1)
+func releaseProcess() {
+	indexingProcesses.Done()
+	semaphoreLimiter.Release(1)
+}
+
+func (s *service) indexBlock(height int) {
+	defer releaseProcess()
 
 	// Height 0 does not a have a block
 	// Core always returns error with it
@@ -194,30 +180,18 @@ func (s *service) indexBlockWithRetries(height int) {
 		return
 	}
 
-	var retry int64
-
-	for {
-		err := s.indexer.IndexBlock(height)
-		if err == nil {
-			break
-		}
-
-		retry++
-
-		if retry == s.retries {
-			break
-		}
+	err := s.indexBlockWithRetries(height, s.indexer)
+	if err != nil {
+		s.indexBlockWithRetries(height, s.fallbackIndexer)
 	}
 }
 
-func (s *service) indexBlockTransactionsWithRetries(height int) {
-	defer indexingProcesses.Done()
-	defer concurrencyLimiter.Release(1)
-
+func (s *service) indexBlockWithRetries(height int, indexer indexer) error {
 	var retry int64
+	var err error
 
 	for {
-		err := s.indexer.IndexBlockTransactions(height)
+		err = indexer.IndexBlock(height)
 		if err == nil {
 			break
 		}
@@ -228,43 +202,122 @@ func (s *service) indexBlockTransactionsWithRetries(height int) {
 			break
 		}
 	}
+
+	return err
+}
+
+func (s *service) indexBlockTransactions(height int) {
+	defer releaseProcess()
+
+	err := s.indexBlockTransactionsWithRetries(height, s.indexer)
+	if err != nil {
+		s.indexBlockTransactionsWithRetries(height, s.fallbackIndexer)
+	}
+}
+
+func (s *service) indexBlockTransactionsWithRetries(height int, indexer indexer) error {
+	var retry int64
+	var err error
+
+	for {
+		err := indexer.IndexBlockTransactions(height)
+		if err == nil {
+			break
+		}
+
+		retry++
+
+		if retry == s.retries {
+			break
+		}
+	}
+
+	return err
+}
+
+func parseParams() (string, string, int, int) {
+	mainNode := flag.String("node", "", "Main node URL to index")
+	fallbackNode := flag.String("fallback", "", "Fallback node URL to index in case main one fails")
+	fromHeight := flag.Int("from", -1, "Starting height to index, optional param")
+	toHeight := flag.Int("to", -1, "Final height to index, optional param")
+
+	flag.Parse()
+
+	return *mainNode, *fallbackNode, *fromHeight, *toHeight
+}
+
+func getFallbacks(fallbackNode string, driver driver) (provider, indexer) {
+	if fallbackNode == "" {
+		return nil, nil
+	}
+
+	fallbackProvider := providerlib.NewProvider(fallbackNode, nil)
+
+	fallbackProvider.UpdateRequestConfig(int(clientRetries), time.Duration(clientTimeout)*time.Millisecond)
+
+	fallbackIndexer := indexerlib.NewIndexer(fallbackProvider, driver)
+
+	return fallbackProvider, fallbackIndexer
+}
+
+func getOptions(fromHeight, toHeight int) *indexOptions {
+	if fromHeight >= 0 && toHeight >= 0 {
+		return &indexOptions{
+			fromHeight: fromHeight,
+			toHeight:   toHeight,
+		}
+	}
+
+	return nil
+}
+
+func (s *service) setOptionalParams(fromHeight, toHeight int) error {
+	if fromHeight >= 0 && toHeight >= 0 {
+		if toHeight < fromHeight {
+			return errToHeightLowerThanFromHeight
+		}
+
+		s.hasEnd = true
+		s.fromHeight = fromHeight
+		s.toHeight = toHeight
+	}
+
+	return nil
 }
 
 func setupService() (*service, error) {
-	reqProvider := providerlib.NewProvider(os.Args[1], nil)
+	mainNode, fallbackNode, fromHeight, toHeight := parseParams()
 
-	reqProvider.UpdateRequestConfig(int(clientRetries), time.Duration(clientTimeout)*time.Millisecond)
+	mainProvider := providerlib.NewProvider(mainNode, nil)
+
+	mainProvider.UpdateRequestConfig(int(clientRetries), time.Duration(clientTimeout)*time.Millisecond)
 
 	driver, err := postgresdriver.NewPostgresDriverFromConnectionString(connectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	indexer := indexerlib.NewIndexer(reqProvider, driver)
+	mainIndexer := indexerlib.NewIndexer(mainProvider, driver)
 
-	options := &indexOptions{}
+	fallbackProvider, fallbackIndexer := getFallbacks(fallbackNode, driver)
 
-	if len(os.Args) > 2 {
-		fromHeight, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			return nil, err
-		}
-
-		toHeight, err := strconv.Atoi(os.Args[3])
-		if err != nil {
-			return nil, err
-		}
-
-		options = &indexOptions{
-			fromHeight: fromHeight,
-			toHeight:   toHeight,
-		}
-	} else {
-		options = nil
+	service := &service{
+		indexer:          mainIndexer,
+		fallbackIndexer:  fallbackIndexer,
+		provider:         mainProvider,
+		fallbackProvider: fallbackProvider,
+		driver:           driver,
+		retries:          serviceRetries,
+		concurrency:      concurrency,
+		reqInterval:      time.Duration(reqInterval) * time.Millisecond,
 	}
 
-	return newService(serviceRetries, concurrency, time.Duration(reqInterval)*time.Millisecond,
-		reqProvider, driver, indexer, options)
+	err = service.setOptionalParams(fromHeight, toHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	return service, nil
 }
 
 func main() {
