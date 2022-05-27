@@ -18,8 +18,8 @@ var (
 	errToHeightLowerThanFromHeight          = errors.New("to height is lower than from height")
 	errInputHeightIsHigherThanCurrentHeight = errors.New("input height is higher than current height")
 
-	indexingProcesses  sync.WaitGroup
-	concurrencyLimiter *semaphore.Weighted
+	indexingProcesses sync.WaitGroup
+	semaphoreLimiter  *semaphore.Weighted
 
 	clientTimeout    = environment.GetInt64("CLIENT_TIMEOUT", 60000)
 	clientRetries    = environment.GetInt64("CLIENT_RETRIES", 3)
@@ -69,31 +69,6 @@ type service struct {
 	retries          int64
 	concurrency      int64
 	reqInterval      time.Duration
-}
-
-func newService(retries, concurrency int64, reqInterval time.Duration, provider, fallbackProvider provider, driver driver, indexer, fallbackIndexer indexer, options *indexOptions) (*service, error) {
-	service := &service{
-		indexer:          indexer,
-		fallbackIndexer:  fallbackIndexer,
-		provider:         provider,
-		fallbackProvider: fallbackProvider,
-		driver:           driver,
-		retries:          retries,
-		concurrency:      concurrency,
-		reqInterval:      reqInterval,
-	}
-
-	if options != nil {
-		if options.toHeight < options.fromHeight {
-			return nil, errToHeightLowerThanFromHeight
-		}
-
-		service.hasEnd = true
-		service.fromHeight = options.fromHeight
-		service.toHeight = options.toHeight
-	}
-
-	return service, nil
 }
 
 func (s *service) start() error {
@@ -172,12 +147,12 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 		return nil
 	}
 
-	concurrencyLimiter = semaphore.NewWeighted(s.concurrency)
+	semaphoreLimiter = semaphore.NewWeighted(s.concurrency)
 
 	for _, height := range heightsToIndex {
 		indexingProcesses.Add(2)
 
-		err := concurrencyLimiter.Acquire(context.Background(), 2)
+		err := semaphoreLimiter.Acquire(context.Background(), 2)
 		if err != nil {
 			return err
 		}
@@ -193,7 +168,7 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 
 func releaseProcess() {
 	indexingProcesses.Done()
-	concurrencyLimiter.Release(1)
+	semaphoreLimiter.Release(1)
 }
 
 func (s *service) indexBlock(height int) {
@@ -296,6 +271,20 @@ func getOptions(fromHeight, toHeight int) *indexOptions {
 	return nil
 }
 
+func (s *service) setOptionalParams(fromHeight, toHeight int) error {
+	if fromHeight >= 0 && toHeight >= 0 {
+		if toHeight < fromHeight {
+			return errToHeightLowerThanFromHeight
+		}
+
+		s.hasEnd = true
+		s.fromHeight = fromHeight
+		s.toHeight = toHeight
+	}
+
+	return nil
+}
+
 func setupService() (*service, error) {
 	mainNode, fallbackNode, fromHeight, toHeight := parseParams()
 
@@ -312,10 +301,23 @@ func setupService() (*service, error) {
 
 	fallbackProvider, fallbackIndexer := getFallbacks(fallbackNode, driver)
 
-	options := getOptions(fromHeight, toHeight)
+	service := &service{
+		indexer:          mainIndexer,
+		fallbackIndexer:  fallbackIndexer,
+		provider:         mainProvider,
+		fallbackProvider: fallbackProvider,
+		driver:           driver,
+		retries:          serviceRetries,
+		concurrency:      concurrency,
+		reqInterval:      time.Duration(reqInterval) * time.Millisecond,
+	}
 
-	return newService(serviceRetries, concurrency, time.Duration(reqInterval)*time.Millisecond,
-		mainProvider, fallbackProvider, driver, mainIndexer, fallbackIndexer, options)
+	err = service.setOptionalParams(fromHeight, toHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	return service, nil
 }
 
 func main() {
