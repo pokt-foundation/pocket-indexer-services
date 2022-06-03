@@ -59,12 +59,6 @@ type driver interface {
 	WriteTransactions(txs []*indexerlib.Transaction) error
 }
 
-// indexOptions optional parameters for the custom range in indexing
-type indexOptions struct {
-	fromHeight int
-	toHeight   int
-}
-
 // service struct handler for all necessary fiels for indexing
 type service struct {
 	indexer          indexer
@@ -111,7 +105,10 @@ func (s *service) start() error {
 			return err
 		}
 
-		s.indexHeights(heightsToIndex)
+		err = s.indexHeights(heightsToIndex)
+		if err != nil {
+			return err
+		}
 
 		if s.hasEnd {
 			break
@@ -305,17 +302,6 @@ func getFallbacks(fallbackNode string, driver driver) (provider, indexer) {
 	fallbackIndexer := indexerlib.NewIndexer(fallbackProvider, driver)
 
 	return fallbackProvider, fallbackIndexer
-}
-
-func getOptions(fromHeight, toHeight int) *indexOptions {
-	if fromHeight >= 0 && toHeight >= 0 {
-		return &indexOptions{
-			fromHeight: fromHeight,
-			toHeight:   toHeight,
-		}
-	}
-
-	return nil
 }
 
 func (s *service) setOptionalParams(fromHeight, toHeight int) error {

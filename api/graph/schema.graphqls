@@ -1,0 +1,72 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+scalar Map
+
+type Block {
+  hash: String!
+  height: Int!
+  time: Time!
+  proposerAddress: String!
+  txCount: Int!
+  relayCount: Int!
+}
+
+type Transaction {
+  hash: String!
+  fromAddress: String!
+  toAddress: String!
+  appPubKey: String!
+  blockchains: [String!]
+  messageType: String!
+  height: Int!
+  index: Int!
+  stdTx: StdTx
+  txResult: TxResult
+  tx: String!
+  entropy: Int!
+  fee: Int!
+  feeDenomination: String!
+}
+
+type StdTx {
+  entropy: Int!
+  fee: [Fee]
+  memo: String!
+  msg: TxMsg
+  signature: TxSignature
+}
+
+type Fee {
+  amount: String!
+  denom: String!
+}
+
+type TxMsg {
+  type: String!
+  value: Map
+}
+
+type TxSignature {
+  pubKey: String!
+  signature: String!
+}
+
+type TxResult {
+  code: Int!
+  codespace: String!
+  data: String!
+  events: String!
+  info: String!
+  log: String!
+  messageType: String!
+  recipient: String!
+  signer: String!
+}
+
+type Query {
+  blocks: [Block]
+  transactions: [Transaction]
+}
