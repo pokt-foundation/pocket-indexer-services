@@ -67,6 +67,9 @@ type TxResult {
 }
 
 type Query {
-  blocks: [Block]
-  transactions: [Transaction]
+  queryBlock(hash: String!): Block
+  queryBlocks(page: Int, perPage: Int): [Block]
+  queryTransaction(hash: String!): Transaction
+  queryTransactions(page: Int, perPage: Int): [Transaction]
+  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): [Transaction]
 }

@@ -7,17 +7,58 @@ import (
 	"context"
 
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
+	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/generated"
 )
 
-// Blocks returns all blocks saved
-func (r *queryResolver) Blocks(ctx context.Context) ([]*indexer.Block, error) {
-	return r.Driver.ReadBlocks()
+func (r *queryResolver) QueryBlock(ctx context.Context, hash string) (*indexer.Block, error) {
+	return r.Reader.ReadBlock(hash)
 }
 
-// Transactions returns all transactions saved
-func (r *queryResolver) Transactions(ctx context.Context) ([]*indexer.Transaction, error) {
-	return r.Driver.ReadTransactions()
+func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int) ([]*indexer.Block, error) {
+	options := &postgresdriver.ReadBlocksOptions{}
+
+	if page != nil {
+		options.Page = *page
+	}
+
+	if perPage != nil {
+		options.PerPage = *perPage
+	}
+
+	return r.Reader.ReadBlocks(options)
+}
+
+func (r *queryResolver) QueryTransaction(ctx context.Context, hash string) (*indexer.Transaction, error) {
+	return r.Reader.ReadTransaction(hash)
+}
+
+func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int) ([]*indexer.Transaction, error) {
+	options := &postgresdriver.ReadTransactionsOptions{}
+
+	if page != nil {
+		options.Page = *page
+	}
+
+	if perPage != nil {
+		options.PerPage = *perPage
+	}
+
+	return r.Reader.ReadTransactions(options)
+}
+
+func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) ([]*indexer.Transaction, error) {
+	options := &postgresdriver.ReadTransactionsByAddressOptions{}
+
+	if page != nil {
+		options.Page = *page
+	}
+
+	if perPage != nil {
+		options.PerPage = *perPage
+	}
+
+	return r.Reader.ReadTransactionsByAddress(address, options)
 }
 
 // Query returns generated.QueryResolver implementation.

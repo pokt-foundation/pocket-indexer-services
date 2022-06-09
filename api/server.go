@@ -25,7 +25,7 @@ func main() {
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		Driver: driver,
+		Reader: driver,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
