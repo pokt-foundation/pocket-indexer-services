@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,9 +29,16 @@ func main() {
 		Reader: driver,
 	}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	runPlayground := flag.Bool("p", false, "Flag to activate playground")
+
+	flag.Parse()
+
 	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	if *runPlayground {
+		http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	}
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
