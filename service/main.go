@@ -47,7 +47,7 @@ type indexer interface {
 // provider interface of needed functions in the provider
 type provider interface {
 	GetBlock(blockNumber int) (*providerlib.GetBlockOutput, error)
-	GetBlockTransactions(blockHeight int, options *providerlib.GetBlockTransactionsOptions) (*providerlib.GetBlockTransactionsOutput, error)
+	GetBlockTransactions(options *providerlib.GetBlockTransactionsOptions) (*providerlib.GetBlockTransactionsOutput, error)
 	GetBlockHeight() (int, error)
 	UpdateRequestConfig(retries int, timeout time.Duration)
 }
@@ -83,7 +83,7 @@ func (s *service) logErrorWithFields(message string, height int, err error) {
 		"err":           err.Error(),
 	}
 
-	if height >= 0 {
+	if height > 0 {
 		fields["height"] = height
 	}
 
@@ -156,9 +156,9 @@ func (s *service) getFromHeight(maxSavedHeight int64, getMaxHeightErr error) int
 		return s.fromHeight
 	}
 
-	// This error means nothing was saved in the database and it should start indexing from 0
+	// This error means nothing was saved in the database and it should start indexing from 1
 	if errors.Is(getMaxHeightErr, postgresdriver.ErrNoPreviousHeight) {
-		return 0
+		return 1
 	}
 
 	return int(maxSavedHeight) + 1
@@ -204,12 +204,6 @@ func releaseProcess() {
 func (s *service) indexBlock(height int) {
 	defer releaseProcess()
 
-	// Height 0 does not a have a block
-	// Core always returns error with it
-	if height == 0 {
-		return
-	}
-
 	err := s.indexBlockWithRetries(height, s.indexer)
 	if err != nil {
 		s.logErrorWithFields("Index block with main node failed", height, err)
@@ -220,7 +214,7 @@ func (s *service) indexBlock(height int) {
 		}
 	}
 
-	s.logInfoWithFields("Block indexed succesfully", height)
+	s.logInfoWithFields("Block indexed successfully", height)
 }
 
 func (s *service) indexBlockWithRetries(height int, indexer indexer) error {
@@ -256,7 +250,7 @@ func (s *service) indexBlockTransactions(height int) {
 		}
 	}
 
-	s.logInfoWithFields("Block transactions indexed succesfully", height)
+	s.logInfoWithFields("Block transactions indexed successfully", height)
 }
 
 func (s *service) indexBlockTransactionsWithRetries(height int, indexer indexer) error {
@@ -305,7 +299,7 @@ func getFallbacks(fallbackNode string, driver driver) (provider, indexer) {
 }
 
 func (s *service) setOptionalParams(fromHeight, toHeight int) error {
-	if fromHeight >= 0 && toHeight >= 0 {
+	if fromHeight > 0 && toHeight > 0 {
 		if toHeight < fromHeight {
 			return errToHeightLowerThanFromHeight
 		}
@@ -366,5 +360,5 @@ func main() {
 		service.logErrorWithFields("Start service failed", -1, err)
 	}
 
-	log.Info("Execution finished succesfully")
+	log.Info("Execution finished successfully")
 }

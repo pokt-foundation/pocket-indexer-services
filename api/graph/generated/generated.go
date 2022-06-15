@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/pokt-foundation/pocket-go/provider"
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
+	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -52,17 +53,26 @@ type ComplexityRoot struct {
 		Time            func(childComplexity int) int
 	}
 
+	BlocksResponse struct {
+		Blocks     func(childComplexity int) int
+		Page       func(childComplexity int) int
+		PageCount  func(childComplexity int) int
+		TotalPages func(childComplexity int) int
+	}
+
 	Fee struct {
 		Amount func(childComplexity int) int
 		Denom  func(childComplexity int) int
 	}
 
 	Query struct {
-		QueryBlock                 func(childComplexity int, hash string) int
+		QueryBlockByHash           func(childComplexity int, hash string) int
+		QueryBlockByHeight         func(childComplexity int, height int) int
 		QueryBlocks                func(childComplexity int, page *int, perPage *int) int
-		QueryTransaction           func(childComplexity int, hash string) int
+		QueryTransactionByHash     func(childComplexity int, hash string) int
 		QueryTransactions          func(childComplexity int, page *int, perPage *int) int
 		QueryTransactionsByAddress func(childComplexity int, address string, page *int, perPage *int) int
+		QueryTransactionsByHeight  func(childComplexity int, height int, page *int, perPage *int) int
 	}
 
 	StdTx struct {
@@ -74,6 +84,7 @@ type ComplexityRoot struct {
 	}
 
 	Transaction struct {
+		Amount          func(childComplexity int) int
 		AppPubKey       func(childComplexity int) int
 		Blockchains     func(childComplexity int) int
 		Entropy         func(childComplexity int) int
@@ -88,6 +99,13 @@ type ComplexityRoot struct {
 		ToAddress       func(childComplexity int) int
 		Tx              func(childComplexity int) int
 		TxResult        func(childComplexity int) int
+	}
+
+	TransactionsResponse struct {
+		Page         func(childComplexity int) int
+		PageCount    func(childComplexity int) int
+		TotalPages   func(childComplexity int) int
+		Transactions func(childComplexity int) int
 	}
 
 	TxMsg struct {
@@ -114,11 +132,13 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	QueryBlock(ctx context.Context, hash string) (*indexer.Block, error)
-	QueryBlocks(ctx context.Context, page *int, perPage *int) ([]*indexer.Block, error)
-	QueryTransaction(ctx context.Context, hash string) (*indexer.Transaction, error)
-	QueryTransactions(ctx context.Context, page *int, perPage *int) ([]*indexer.Transaction, error)
-	QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) ([]*indexer.Transaction, error)
+	QueryBlockByHash(ctx context.Context, hash string) (*indexer.Block, error)
+	QueryBlockByHeight(ctx context.Context, height int) (*indexer.Block, error)
+	QueryBlocks(ctx context.Context, page *int, perPage *int) (*model.BlocksResponse, error)
+	QueryTransactionByHash(ctx context.Context, hash string) (*indexer.Transaction, error)
+	QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error)
+	QueryTransactions(ctx context.Context, page *int, perPage *int) (*model.TransactionsResponse, error)
+	QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error)
 }
 
 type executableSchema struct {
@@ -171,6 +191,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Block.Time(childComplexity), true
 
+	case "BlocksResponse.blocks":
+		if e.complexity.BlocksResponse.Blocks == nil {
+			break
+		}
+
+		return e.complexity.BlocksResponse.Blocks(childComplexity), true
+
+	case "BlocksResponse.page":
+		if e.complexity.BlocksResponse.Page == nil {
+			break
+		}
+
+		return e.complexity.BlocksResponse.Page(childComplexity), true
+
+	case "BlocksResponse.pageCount":
+		if e.complexity.BlocksResponse.PageCount == nil {
+			break
+		}
+
+		return e.complexity.BlocksResponse.PageCount(childComplexity), true
+
+	case "BlocksResponse.totalPages":
+		if e.complexity.BlocksResponse.TotalPages == nil {
+			break
+		}
+
+		return e.complexity.BlocksResponse.TotalPages(childComplexity), true
+
 	case "Fee.amount":
 		if e.complexity.Fee.Amount == nil {
 			break
@@ -185,17 +233,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Fee.Denom(childComplexity), true
 
-	case "Query.queryBlock":
-		if e.complexity.Query.QueryBlock == nil {
+	case "Query.queryBlockByHash":
+		if e.complexity.Query.QueryBlockByHash == nil {
 			break
 		}
 
-		args, err := ec.field_Query_queryBlock_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_queryBlockByHash_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryBlock(childComplexity, args["hash"].(string)), true
+		return e.complexity.Query.QueryBlockByHash(childComplexity, args["hash"].(string)), true
+
+	case "Query.queryBlockByHeight":
+		if e.complexity.Query.QueryBlockByHeight == nil {
+			break
+		}
+
+		args, err := ec.field_Query_queryBlockByHeight_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.QueryBlockByHeight(childComplexity, args["height"].(int)), true
 
 	case "Query.queryBlocks":
 		if e.complexity.Query.QueryBlocks == nil {
@@ -209,17 +269,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.QueryBlocks(childComplexity, args["page"].(*int), args["perPage"].(*int)), true
 
-	case "Query.queryTransaction":
-		if e.complexity.Query.QueryTransaction == nil {
+	case "Query.queryTransactionByHash":
+		if e.complexity.Query.QueryTransactionByHash == nil {
 			break
 		}
 
-		args, err := ec.field_Query_queryTransaction_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_queryTransactionByHash_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryTransaction(childComplexity, args["hash"].(string)), true
+		return e.complexity.Query.QueryTransactionByHash(childComplexity, args["hash"].(string)), true
 
 	case "Query.queryTransactions":
 		if e.complexity.Query.QueryTransactions == nil {
@@ -244,6 +304,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.QueryTransactionsByAddress(childComplexity, args["address"].(string), args["page"].(*int), args["perPage"].(*int)), true
+
+	case "Query.queryTransactionsByHeight":
+		if e.complexity.Query.QueryTransactionsByHeight == nil {
+			break
+		}
+
+		args, err := ec.field_Query_queryTransactionsByHeight_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.QueryTransactionsByHeight(childComplexity, args["height"].(int), args["page"].(*int), args["perPage"].(*int)), true
 
 	case "StdTx.entropy":
 		if e.complexity.StdTx.Entropy == nil {
@@ -279,6 +351,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.StdTx.Signature(childComplexity), true
+
+	case "Transaction.amount":
+		if e.complexity.Transaction.Amount == nil {
+			break
+		}
+
+		return e.complexity.Transaction.Amount(childComplexity), true
 
 	case "Transaction.appPubKey":
 		if e.complexity.Transaction.AppPubKey == nil {
@@ -377,6 +456,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Transaction.TxResult(childComplexity), true
+
+	case "TransactionsResponse.page":
+		if e.complexity.TransactionsResponse.Page == nil {
+			break
+		}
+
+		return e.complexity.TransactionsResponse.Page(childComplexity), true
+
+	case "TransactionsResponse.pageCount":
+		if e.complexity.TransactionsResponse.PageCount == nil {
+			break
+		}
+
+		return e.complexity.TransactionsResponse.PageCount(childComplexity), true
+
+	case "TransactionsResponse.totalPages":
+		if e.complexity.TransactionsResponse.TotalPages == nil {
+			break
+		}
+
+		return e.complexity.TransactionsResponse.TotalPages(childComplexity), true
+
+	case "TransactionsResponse.transactions":
+		if e.complexity.TransactionsResponse.Transactions == nil {
+			break
+		}
+
+		return e.complexity.TransactionsResponse.Transactions(childComplexity), true
 
 	case "TxMsg.type":
 		if e.complexity.TxMsg.Type == nil {
@@ -551,6 +658,7 @@ type Transaction {
   entropy: Int!
   fee: Int!
   feeDenomination: String!
+  amount: Int!
 }
 
 type StdTx {
@@ -588,12 +696,28 @@ type TxResult {
   signer: String!
 }
 
+type BlocksResponse {
+  blocks: [Block]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+type TransactionsResponse {
+  transactions: [Transaction]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
 type Query {
-  queryBlock(hash: String!): Block
-  queryBlocks(page: Int, perPage: Int): [Block]
-  queryTransaction(hash: String!): Transaction
-  queryTransactions(page: Int, perPage: Int): [Transaction]
-  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): [Transaction]
+  queryBlockByHash(hash: String!): Block
+  queryBlockByHeight(height: Int!): Block
+  queryBlocks(page: Int, perPage: Int): BlocksResponse
+  queryTransactionByHash(hash: String!): Transaction
+  queryTransactionsByHeight(height: Int!, page: Int, perPage: Int): TransactionsResponse
+  queryTransactions(page: Int, perPage: Int): TransactionsResponse
+  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): TransactionsResponse
 }
 `, BuiltIn: false},
 }
@@ -618,7 +742,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_queryBlock_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_queryBlockByHash_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -630,6 +754,21 @@ func (ec *executionContext) field_Query_queryBlock_args(ctx context.Context, raw
 		}
 	}
 	args["hash"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_queryBlockByHeight_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["height"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("height"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["height"] = arg0
 	return args, nil
 }
 
@@ -657,7 +796,7 @@ func (ec *executionContext) field_Query_queryBlocks_args(ctx context.Context, ra
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_queryTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_queryTransactionByHash_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -684,6 +823,39 @@ func (ec *executionContext) field_Query_queryTransactionsByAddress_args(ctx cont
 		}
 	}
 	args["address"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["perPage"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("perPage"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["perPage"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_queryTransactionsByHeight_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["height"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("height"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["height"] = arg0
 	var arg1 *int
 	if tmp, ok := rawArgs["page"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
@@ -987,6 +1159,191 @@ func (ec *executionContext) fieldContext_Block_txCount(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _BlocksResponse_blocks(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BlocksResponse_blocks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Blocks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*indexer.Block)
+	fc.Result = res
+	return ec.marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BlocksResponse_blocks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BlocksResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_Block_hash(ctx, field)
+			case "height":
+				return ec.fieldContext_Block_height(ctx, field)
+			case "time":
+				return ec.fieldContext_Block_time(ctx, field)
+			case "proposerAddress":
+				return ec.fieldContext_Block_proposerAddress(ctx, field)
+			case "txCount":
+				return ec.fieldContext_Block_txCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BlocksResponse_pageCount(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BlocksResponse_pageCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BlocksResponse_pageCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BlocksResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BlocksResponse_page(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BlocksResponse_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Page, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BlocksResponse_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BlocksResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BlocksResponse_totalPages(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BlocksResponse_totalPages(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalPages, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BlocksResponse_totalPages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BlocksResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Fee_amount(ctx context.Context, field graphql.CollectedField, obj *provider.Fee) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Fee_amount(ctx, field)
 	if err != nil {
@@ -1075,8 +1432,8 @@ func (ec *executionContext) fieldContext_Fee_denom(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_queryBlock(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_queryBlock(ctx, field)
+func (ec *executionContext) _Query_queryBlockByHash(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_queryBlockByHash(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1089,7 +1446,7 @@ func (ec *executionContext) _Query_queryBlock(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryBlock(rctx, fc.Args["hash"].(string))
+		return ec.resolvers.Query().QueryBlockByHash(rctx, fc.Args["hash"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1103,7 +1460,7 @@ func (ec *executionContext) _Query_queryBlock(ctx context.Context, field graphql
 	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_queryBlock(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_queryBlockByHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1132,7 +1489,71 @@ func (ec *executionContext) fieldContext_Query_queryBlock(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_queryBlock_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_queryBlockByHash_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_queryBlockByHeight(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_queryBlockByHeight(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().QueryBlockByHeight(rctx, fc.Args["height"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*indexer.Block)
+	fc.Result = res
+	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_queryBlockByHeight(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_Block_hash(ctx, field)
+			case "height":
+				return ec.fieldContext_Block_height(ctx, field)
+			case "time":
+				return ec.fieldContext_Block_time(ctx, field)
+			case "proposerAddress":
+				return ec.fieldContext_Block_proposerAddress(ctx, field)
+			case "txCount":
+				return ec.fieldContext_Block_txCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_queryBlockByHeight_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1162,9 +1583,9 @@ func (ec *executionContext) _Query_queryBlocks(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*indexer.Block)
+	res := resTmp.(*model.BlocksResponse)
 	fc.Result = res
-	return ec.marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+	return ec.marshalOBlocksResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐBlocksResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_queryBlocks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1175,18 +1596,16 @@ func (ec *executionContext) fieldContext_Query_queryBlocks(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "hash":
-				return ec.fieldContext_Block_hash(ctx, field)
-			case "height":
-				return ec.fieldContext_Block_height(ctx, field)
-			case "time":
-				return ec.fieldContext_Block_time(ctx, field)
-			case "proposerAddress":
-				return ec.fieldContext_Block_proposerAddress(ctx, field)
-			case "txCount":
-				return ec.fieldContext_Block_txCount(ctx, field)
+			case "blocks":
+				return ec.fieldContext_BlocksResponse_blocks(ctx, field)
+			case "pageCount":
+				return ec.fieldContext_BlocksResponse_pageCount(ctx, field)
+			case "page":
+				return ec.fieldContext_BlocksResponse_page(ctx, field)
+			case "totalPages":
+				return ec.fieldContext_BlocksResponse_totalPages(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BlocksResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -1203,8 +1622,8 @@ func (ec *executionContext) fieldContext_Query_queryBlocks(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_queryTransaction(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_queryTransaction(ctx, field)
+func (ec *executionContext) _Query_queryTransactionByHash(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_queryTransactionByHash(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1217,7 +1636,7 @@ func (ec *executionContext) _Query_queryTransaction(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryTransaction(rctx, fc.Args["hash"].(string))
+		return ec.resolvers.Query().QueryTransactionByHash(rctx, fc.Args["hash"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1231,7 +1650,7 @@ func (ec *executionContext) _Query_queryTransaction(ctx context.Context, field g
 	return ec.marshalOTransaction2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐTransaction(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_queryTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_queryTransactionByHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1267,6 +1686,8 @@ func (ec *executionContext) fieldContext_Query_queryTransaction(ctx context.Cont
 				return ec.fieldContext_Transaction_fee(ctx, field)
 			case "feeDenomination":
 				return ec.fieldContext_Transaction_feeDenomination(ctx, field)
+			case "amount":
+				return ec.fieldContext_Transaction_amount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
 		},
@@ -1278,7 +1699,69 @@ func (ec *executionContext) fieldContext_Query_queryTransaction(ctx context.Cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_queryTransaction_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_queryTransactionByHash_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_queryTransactionsByHeight(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_queryTransactionsByHeight(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().QueryTransactionsByHeight(rctx, fc.Args["height"].(int), fc.Args["page"].(*int), fc.Args["perPage"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.TransactionsResponse)
+	fc.Result = res
+	return ec.marshalOTransactionsResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐTransactionsResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_queryTransactionsByHeight(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "transactions":
+				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "pageCount":
+				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
+			case "page":
+				return ec.fieldContext_TransactionsResponse_page(ctx, field)
+			case "totalPages":
+				return ec.fieldContext_TransactionsResponse_totalPages(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TransactionsResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_queryTransactionsByHeight_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1308,9 +1791,9 @@ func (ec *executionContext) _Query_queryTransactions(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*indexer.Transaction)
+	res := resTmp.(*model.TransactionsResponse)
 	fc.Result = res
-	return ec.marshalOTransaction2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐTransaction(ctx, field.Selections, res)
+	return ec.marshalOTransactionsResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐTransactionsResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_queryTransactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1321,36 +1804,16 @@ func (ec *executionContext) fieldContext_Query_queryTransactions(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "hash":
-				return ec.fieldContext_Transaction_hash(ctx, field)
-			case "fromAddress":
-				return ec.fieldContext_Transaction_fromAddress(ctx, field)
-			case "toAddress":
-				return ec.fieldContext_Transaction_toAddress(ctx, field)
-			case "appPubKey":
-				return ec.fieldContext_Transaction_appPubKey(ctx, field)
-			case "blockchains":
-				return ec.fieldContext_Transaction_blockchains(ctx, field)
-			case "messageType":
-				return ec.fieldContext_Transaction_messageType(ctx, field)
-			case "height":
-				return ec.fieldContext_Transaction_height(ctx, field)
-			case "index":
-				return ec.fieldContext_Transaction_index(ctx, field)
-			case "stdTx":
-				return ec.fieldContext_Transaction_stdTx(ctx, field)
-			case "txResult":
-				return ec.fieldContext_Transaction_txResult(ctx, field)
-			case "tx":
-				return ec.fieldContext_Transaction_tx(ctx, field)
-			case "entropy":
-				return ec.fieldContext_Transaction_entropy(ctx, field)
-			case "fee":
-				return ec.fieldContext_Transaction_fee(ctx, field)
-			case "feeDenomination":
-				return ec.fieldContext_Transaction_feeDenomination(ctx, field)
+			case "transactions":
+				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "pageCount":
+				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
+			case "page":
+				return ec.fieldContext_TransactionsResponse_page(ctx, field)
+			case "totalPages":
+				return ec.fieldContext_TransactionsResponse_totalPages(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TransactionsResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -1390,9 +1853,9 @@ func (ec *executionContext) _Query_queryTransactionsByAddress(ctx context.Contex
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*indexer.Transaction)
+	res := resTmp.(*model.TransactionsResponse)
 	fc.Result = res
-	return ec.marshalOTransaction2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐTransaction(ctx, field.Selections, res)
+	return ec.marshalOTransactionsResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐTransactionsResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_queryTransactionsByAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1403,36 +1866,16 @@ func (ec *executionContext) fieldContext_Query_queryTransactionsByAddress(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "hash":
-				return ec.fieldContext_Transaction_hash(ctx, field)
-			case "fromAddress":
-				return ec.fieldContext_Transaction_fromAddress(ctx, field)
-			case "toAddress":
-				return ec.fieldContext_Transaction_toAddress(ctx, field)
-			case "appPubKey":
-				return ec.fieldContext_Transaction_appPubKey(ctx, field)
-			case "blockchains":
-				return ec.fieldContext_Transaction_blockchains(ctx, field)
-			case "messageType":
-				return ec.fieldContext_Transaction_messageType(ctx, field)
-			case "height":
-				return ec.fieldContext_Transaction_height(ctx, field)
-			case "index":
-				return ec.fieldContext_Transaction_index(ctx, field)
-			case "stdTx":
-				return ec.fieldContext_Transaction_stdTx(ctx, field)
-			case "txResult":
-				return ec.fieldContext_Transaction_txResult(ctx, field)
-			case "tx":
-				return ec.fieldContext_Transaction_tx(ctx, field)
-			case "entropy":
-				return ec.fieldContext_Transaction_entropy(ctx, field)
-			case "fee":
-				return ec.fieldContext_Transaction_fee(ctx, field)
-			case "feeDenomination":
-				return ec.fieldContext_Transaction_feeDenomination(ctx, field)
+			case "transactions":
+				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "pageCount":
+				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
+			case "page":
+				return ec.fieldContext_TransactionsResponse_page(ctx, field)
+			case "totalPages":
+				return ec.fieldContext_TransactionsResponse_totalPages(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TransactionsResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -2441,6 +2884,255 @@ func (ec *executionContext) fieldContext_Transaction_feeDenomination(ctx context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transaction_amount(ctx context.Context, field graphql.CollectedField, obj *indexer.Transaction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transaction_amount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Amount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transaction_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transaction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransactionsResponse_transactions(ctx context.Context, field graphql.CollectedField, obj *model.TransactionsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Transactions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*indexer.Transaction)
+	fc.Result = res
+	return ec.marshalOTransaction2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐTransaction(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TransactionsResponse_transactions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransactionsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hash":
+				return ec.fieldContext_Transaction_hash(ctx, field)
+			case "fromAddress":
+				return ec.fieldContext_Transaction_fromAddress(ctx, field)
+			case "toAddress":
+				return ec.fieldContext_Transaction_toAddress(ctx, field)
+			case "appPubKey":
+				return ec.fieldContext_Transaction_appPubKey(ctx, field)
+			case "blockchains":
+				return ec.fieldContext_Transaction_blockchains(ctx, field)
+			case "messageType":
+				return ec.fieldContext_Transaction_messageType(ctx, field)
+			case "height":
+				return ec.fieldContext_Transaction_height(ctx, field)
+			case "index":
+				return ec.fieldContext_Transaction_index(ctx, field)
+			case "stdTx":
+				return ec.fieldContext_Transaction_stdTx(ctx, field)
+			case "txResult":
+				return ec.fieldContext_Transaction_txResult(ctx, field)
+			case "tx":
+				return ec.fieldContext_Transaction_tx(ctx, field)
+			case "entropy":
+				return ec.fieldContext_Transaction_entropy(ctx, field)
+			case "fee":
+				return ec.fieldContext_Transaction_fee(ctx, field)
+			case "feeDenomination":
+				return ec.fieldContext_Transaction_feeDenomination(ctx, field)
+			case "amount":
+				return ec.fieldContext_Transaction_amount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Transaction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransactionsResponse_pageCount(ctx context.Context, field graphql.CollectedField, obj *model.TransactionsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TransactionsResponse_pageCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransactionsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransactionsResponse_page(ctx context.Context, field graphql.CollectedField, obj *model.TransactionsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TransactionsResponse_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Page, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TransactionsResponse_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransactionsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransactionsResponse_totalPages(ctx context.Context, field graphql.CollectedField, obj *model.TransactionsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TransactionsResponse_totalPages(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalPages, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TransactionsResponse_totalPages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransactionsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4852,6 +5544,52 @@ func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var blocksResponseImplementors = []string{"BlocksResponse"}
+
+func (ec *executionContext) _BlocksResponse(ctx context.Context, sel ast.SelectionSet, obj *model.BlocksResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, blocksResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BlocksResponse")
+		case "blocks":
+
+			out.Values[i] = ec._BlocksResponse_blocks(ctx, field, obj)
+
+		case "pageCount":
+
+			out.Values[i] = ec._BlocksResponse_pageCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "page":
+
+			out.Values[i] = ec._BlocksResponse_page(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalPages":
+
+			out.Values[i] = ec._BlocksResponse_totalPages(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var feeImplementors = []string{"Fee"}
 
 func (ec *executionContext) _Fee(ctx context.Context, sel ast.SelectionSet, obj *provider.Fee) graphql.Marshaler {
@@ -4906,7 +5644,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "queryBlock":
+		case "queryBlockByHash":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4915,7 +5653,27 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_queryBlock(ctx, field)
+				res = ec._Query_queryBlockByHash(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "queryBlockByHeight":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_queryBlockByHeight(ctx, field)
 				return res
 			}
 
@@ -4946,7 +5704,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "queryTransaction":
+		case "queryTransactionByHash":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -4955,7 +5713,27 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_queryTransaction(ctx, field)
+				res = ec._Query_queryTransactionByHash(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "queryTransactionsByHeight":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_queryTransactionsByHeight(ctx, field)
 				return res
 			}
 
@@ -5171,6 +5949,59 @@ func (ec *executionContext) _Transaction(ctx context.Context, sel ast.SelectionS
 		case "feeDenomination":
 
 			out.Values[i] = ec._Transaction_feeDenomination(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amount":
+
+			out.Values[i] = ec._Transaction_amount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var transactionsResponseImplementors = []string{"TransactionsResponse"}
+
+func (ec *executionContext) _TransactionsResponse(ctx context.Context, sel ast.SelectionSet, obj *model.TransactionsResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transactionsResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TransactionsResponse")
+		case "transactions":
+
+			out.Values[i] = ec._TransactionsResponse_transactions(ctx, field, obj)
+
+		case "pageCount":
+
+			out.Values[i] = ec._TransactionsResponse_pageCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "page":
+
+			out.Values[i] = ec._TransactionsResponse_page(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalPages":
+
+			out.Values[i] = ec._TransactionsResponse_totalPages(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -6031,6 +6862,13 @@ func (ec *executionContext) marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋ
 	return ec._Block(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOBlocksResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐBlocksResponse(ctx context.Context, sel ast.SelectionSet, v *model.BlocksResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BlocksResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6244,6 +7082,13 @@ func (ec *executionContext) marshalOTransaction2ᚖgithubᚗcomᚋpoktᚑfoundat
 		return graphql.Null
 	}
 	return ec._Transaction(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTransactionsResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐTransactionsResponse(ctx context.Context, sel ast.SelectionSet, v *model.TransactionsResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TransactionsResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOTxMsg2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑgoᚋproviderᚐTxMsg(ctx context.Context, sel ast.SelectionSet, v *provider.TxMsg) graphql.Marshaler {
