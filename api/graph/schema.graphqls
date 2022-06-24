@@ -28,6 +28,7 @@ type Transaction {
   entropy: Int!
   fee: Int!
   feeDenomination: String!
+  amount: Int!
 }
 
 type StdTx {
@@ -65,10 +66,26 @@ type TxResult {
   signer: String!
 }
 
+type BlocksResponse {
+  blocks: [Block]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+type TransactionsResponse {
+  transactions: [Transaction]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
 type Query {
-  queryBlock(hash: String!): Block
-  queryBlocks(page: Int, perPage: Int): [Block]
-  queryTransaction(hash: String!): Transaction
-  queryTransactions(page: Int, perPage: Int): [Transaction]
-  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): [Transaction]
+  queryBlockByHash(hash: String!): Block
+  queryBlockByHeight(height: Int!): Block
+  queryBlocks(page: Int, perPage: Int): BlocksResponse
+  queryTransactionByHash(hash: String!): Transaction
+  queryTransactionsByHeight(height: Int!, page: Int, perPage: Int): TransactionsResponse
+  queryTransactions(page: Int, perPage: Int): TransactionsResponse
+  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): TransactionsResponse
 }

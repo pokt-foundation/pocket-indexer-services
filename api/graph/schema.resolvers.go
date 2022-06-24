@@ -9,14 +9,22 @@ import (
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/generated"
+	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 )
 
-func (r *queryResolver) QueryBlock(ctx context.Context, hash string) (*indexer.Block, error) {
-	return r.Reader.ReadBlock(hash)
+func (r *queryResolver) QueryBlockByHash(ctx context.Context, hash string) (*indexer.Block, error) {
+	return r.Reader.ReadBlockByHash(hash)
 }
 
-func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int) ([]*indexer.Block, error) {
-	options := &postgresdriver.ReadBlocksOptions{}
+func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*indexer.Block, error) {
+	return r.Reader.ReadBlockByHeight(height)
+}
+
+func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int) (*model.BlocksResponse, error) {
+	options := &postgresdriver.ReadBlocksOptions{
+		Page:    defaultPage,
+		PerPage: defaultPerPage,
+	}
 
 	if page != nil {
 		options.Page = *page
@@ -26,15 +34,33 @@ func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int
 		options.PerPage = *perPage
 	}
 
-	return r.Reader.ReadBlocks(options)
+	blocks, err := r.Reader.ReadBlocks(options)
+	if err != nil {
+		return nil, err
+	}
+
+	quantity, err := r.Reader.GetBlocksQuantity()
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.BlocksResponse{
+		Blocks:     blocks,
+		Page:       options.Page,
+		PageCount:  len(blocks),
+		TotalPages: getTotalPages(int(quantity), options.PerPage),
+	}, nil
 }
 
-func (r *queryResolver) QueryTransaction(ctx context.Context, hash string) (*indexer.Transaction, error) {
-	return r.Reader.ReadTransaction(hash)
+func (r *queryResolver) QueryTransactionByHash(ctx context.Context, hash string) (*indexer.Transaction, error) {
+	return r.Reader.ReadTransactionByHash(hash)
 }
 
-func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int) ([]*indexer.Transaction, error) {
-	options := &postgresdriver.ReadTransactionsOptions{}
+func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error) {
+	options := &postgresdriver.ReadTransactionsByHeightOptions{
+		Page:    defaultPage,
+		PerPage: defaultPerPage,
+	}
 
 	if page != nil {
 		options.Page = *page
@@ -44,11 +70,29 @@ func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPag
 		options.PerPage = *perPage
 	}
 
-	return r.Reader.ReadTransactions(options)
+	transactions, err := r.Reader.ReadTransactionsByHeight(height, options)
+	if err != nil {
+		return nil, err
+	}
+
+	quantity, err := r.Reader.GetTransactionsQuantityByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.TransactionsResponse{
+		Transactions: transactions,
+		Page:         options.Page,
+		PageCount:    len(transactions),
+		TotalPages:   getTotalPages(int(quantity), options.PerPage),
+	}, nil
 }
 
-func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) ([]*indexer.Transaction, error) {
-	options := &postgresdriver.ReadTransactionsByAddressOptions{}
+func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int) (*model.TransactionsResponse, error) {
+	options := &postgresdriver.ReadTransactionsOptions{
+		Page:    defaultPage,
+		PerPage: defaultPerPage,
+	}
 
 	if page != nil {
 		options.Page = *page
@@ -58,7 +102,54 @@ func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address 
 		options.PerPage = *perPage
 	}
 
-	return r.Reader.ReadTransactionsByAddress(address, options)
+	transactions, err := r.Reader.ReadTransactions(options)
+	if err != nil {
+		return nil, err
+	}
+
+	quantity, err := r.Reader.GetTransactionsQuantity()
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.TransactionsResponse{
+		Transactions: transactions,
+		Page:         options.Page,
+		PageCount:    len(transactions),
+		TotalPages:   getTotalPages(int(quantity), options.PerPage),
+	}, nil
+}
+
+func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error) {
+	options := &postgresdriver.ReadTransactionsByAddressOptions{
+		Page:    defaultPage,
+		PerPage: defaultPerPage,
+	}
+
+	if page != nil {
+		options.Page = *page
+	}
+
+	if perPage != nil {
+		options.PerPage = *perPage
+	}
+
+	transactions, err := r.Reader.ReadTransactionsByAddress(address, options)
+	if err != nil {
+		return nil, err
+	}
+
+	quantity, err := r.Reader.GetTransactionsQuantityByAddress(address)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.TransactionsResponse{
+		Transactions: transactions,
+		Page:         options.Page,
+		PageCount:    len(transactions),
+		TotalPages:   getTotalPages(int(quantity), options.PerPage),
+	}, nil
 }
 
 // Query returns generated.QueryResolver implementation.
