@@ -13,7 +13,7 @@ type Block {
   txCount: Int!
 }
 
-type Transaction {
+type GraphQLTransaction {
   hash: String!
   fromAddress: String!
   toAddress: String!
@@ -25,10 +25,10 @@ type Transaction {
   stdTx: StdTx
   txResult: TxResult
   tx: String!
-  entropy: Int!
+  entropy: String!
   fee: Int!
   feeDenomination: String!
-  amount: Int!
+  amount: String!
 }
 
 type StdTx {
@@ -66,6 +66,30 @@ type TxResult {
   signer: String!
 }
 
+type GraphQLAccount {
+  address: String!
+  height: Int!
+  balance: String!
+  balanceDenomination: String!
+}
+
+type GraphQLNode {
+  address: String!
+  height: Int!
+  jailed: Boolean!
+  publicKey: String!
+  serviceURL: String!
+  tokens: String!
+}
+
+type GraphQLApp {
+  address: String!
+  height: Int!
+  jailed: Boolean!
+  publicKey: String!
+  stakedTokens: String!
+}
+
 type BlocksResponse {
   blocks: [Block]
   pageCount: Int!
@@ -74,7 +98,28 @@ type BlocksResponse {
 }
 
 type TransactionsResponse {
-  transactions: [Transaction]
+  transactions: [GraphQLTransaction]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+type AccountsResponse {
+  accounts: [GraphQLAccount]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+type NodesResponse {
+  nodes: [GraphQLNode]
+  pageCount: Int!
+  page: Int!
+  totalPages: Int!
+}
+
+type AppsResponse {
+  apps: [GraphQLApp]
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -84,8 +129,14 @@ type Query {
   queryBlockByHash(hash: String!): Block
   queryBlockByHeight(height: Int!): Block
   queryBlocks(page: Int, perPage: Int): BlocksResponse
-  queryTransactionByHash(hash: String!): Transaction
+  queryTransactionByHash(hash: String!): GraphQLTransaction
   queryTransactionsByHeight(height: Int!, page: Int, perPage: Int): TransactionsResponse
   queryTransactions(page: Int, perPage: Int): TransactionsResponse
   queryTransactionsByAddress(address: String!, page: Int, perPage: Int): TransactionsResponse
+  queryAccountByAddress(address: String!, height: Int): GraphQLAccount
+  queryAccounts(height: Int, page: Int, perPage: Int): AccountsResponse
+  queryNodeByAddress(address: String!, height: Int): GraphQLNode
+  queryNodes(height: Int, page: Int, perPage: Int): NodesResponse
+  queryAppByAddress(address: String!, height: Int): GraphQLApp
+  queryApps(height: Int, page: Int, perPage: Int): AppsResponse
 }
