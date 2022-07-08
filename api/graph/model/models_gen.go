@@ -3,8 +3,23 @@
 package model
 
 import (
+	"github.com/pokt-foundation/pocket-go/provider"
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
 )
+
+type AccountsResponse struct {
+	Accounts   []*GraphQLAccount `json:"accounts"`
+	PageCount  int               `json:"pageCount"`
+	Page       int               `json:"page"`
+	TotalPages int               `json:"totalPages"`
+}
+
+type AppsResponse struct {
+	Apps       []*GraphQLApp `json:"apps"`
+	PageCount  int           `json:"pageCount"`
+	Page       int           `json:"page"`
+	TotalPages int           `json:"totalPages"`
+}
 
 type BlocksResponse struct {
 	Blocks     []*indexer.Block `json:"blocks"`
@@ -13,9 +28,58 @@ type BlocksResponse struct {
 	TotalPages int              `json:"totalPages"`
 }
 
+type GraphQLAccount struct {
+	Address             string `json:"address"`
+	Height              int    `json:"height"`
+	Balance             string `json:"balance"`
+	BalanceDenomination string `json:"balanceDenomination"`
+}
+
+type GraphQLApp struct {
+	Address      string `json:"address"`
+	Height       int    `json:"height"`
+	Jailed       bool   `json:"jailed"`
+	PublicKey    string `json:"publicKey"`
+	StakedTokens string `json:"stakedTokens"`
+}
+
+type GraphQLNode struct {
+	Address    string `json:"address"`
+	Height     int    `json:"height"`
+	Jailed     bool   `json:"jailed"`
+	PublicKey  string `json:"publicKey"`
+	ServiceURL string `json:"serviceURL"`
+	Tokens     string `json:"tokens"`
+}
+
+type GraphQLTransaction struct {
+	Hash            string             `json:"hash"`
+	FromAddress     string             `json:"fromAddress"`
+	ToAddress       string             `json:"toAddress"`
+	AppPubKey       string             `json:"appPubKey"`
+	Blockchains     []string           `json:"blockchains"`
+	MessageType     string             `json:"messageType"`
+	Height          int                `json:"height"`
+	Index           int                `json:"index"`
+	StdTx           *provider.StdTx    `json:"stdTx"`
+	TxResult        *provider.TxResult `json:"txResult"`
+	Tx              string             `json:"tx"`
+	Entropy         string             `json:"entropy"`
+	Fee             int                `json:"fee"`
+	FeeDenomination string             `json:"feeDenomination"`
+	Amount          string             `json:"amount"`
+}
+
+type NodesResponse struct {
+	Nodes      []*GraphQLNode `json:"nodes"`
+	PageCount  int            `json:"pageCount"`
+	Page       int            `json:"page"`
+	TotalPages int            `json:"totalPages"`
+}
+
 type TransactionsResponse struct {
-	Transactions []*indexer.Transaction `json:"transactions"`
-	PageCount    int                    `json:"pageCount"`
-	Page         int                    `json:"page"`
-	TotalPages   int                    `json:"totalPages"`
+	Transactions []*GraphQLTransaction `json:"transactions"`
+	PageCount    int                   `json:"pageCount"`
+	Page         int                   `json:"page"`
+	TotalPages   int                   `json:"totalPages"`
 }
