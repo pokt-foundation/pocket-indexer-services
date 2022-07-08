@@ -92,6 +92,7 @@ type GraphQLApp {
 
 type BlocksResponse {
   blocks: [Block]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -99,6 +100,7 @@ type BlocksResponse {
 
 type TransactionsResponse {
   transactions: [GraphQLTransaction]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -106,6 +108,7 @@ type TransactionsResponse {
 
 type AccountsResponse {
   accounts: [GraphQLAccount]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -113,6 +116,7 @@ type AccountsResponse {
 
 type NodesResponse {
   nodes: [GraphQLNode]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -120,6 +124,7 @@ type NodesResponse {
 
 type AppsResponse {
   apps: [GraphQLApp]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!

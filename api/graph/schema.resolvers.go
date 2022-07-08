@@ -47,6 +47,7 @@ func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int
 	return &model.BlocksResponse{
 		Blocks:     blocks,
 		Page:       options.Page,
+		TotalCount: int(quantity),
 		PageCount:  len(blocks),
 		TotalPages: getTotalPages(int(quantity), options.PerPage),
 	}, nil
@@ -88,6 +89,7 @@ func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height in
 	return &model.TransactionsResponse{
 		Transactions: convertMultipleIndexerTransactionsToGrapQLTransactions(transactions),
 		Page:         options.Page,
+		TotalCount:   int(quantity),
 		PageCount:    len(transactions),
 		TotalPages:   getTotalPages(int(quantity), options.PerPage),
 	}, nil
@@ -120,6 +122,7 @@ func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPag
 	return &model.TransactionsResponse{
 		Transactions: convertMultipleIndexerTransactionsToGrapQLTransactions(transactions),
 		Page:         options.Page,
+		TotalCount:   int(quantity),
 		PageCount:    len(transactions),
 		TotalPages:   getTotalPages(int(quantity), options.PerPage),
 	}, nil
@@ -152,6 +155,7 @@ func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address 
 	return &model.TransactionsResponse{
 		Transactions: convertMultipleIndexerTransactionsToGrapQLTransactions(transactions),
 		Page:         options.Page,
+		TotalCount:   int(quantity),
 		PageCount:    len(transactions),
 		TotalPages:   getTotalPages(int(quantity), options.PerPage),
 	}, nil
@@ -205,6 +209,7 @@ func (r *queryResolver) QueryAccounts(ctx context.Context, height *int, page *in
 	return &model.AccountsResponse{
 		Accounts:   convertMultipleIndexerAccountToGraphQLAccount(accounts),
 		Page:       readOptions.Page,
+		TotalCount: int(quantity),
 		PageCount:  len(accounts),
 		TotalPages: getTotalPages(int(quantity), readOptions.PerPage),
 	}, nil
@@ -258,6 +263,7 @@ func (r *queryResolver) QueryNodes(ctx context.Context, height *int, page *int, 
 	return &model.NodesResponse{
 		Nodes:      convertMultipleIndexerNodeToGraphQLNode(nodes),
 		Page:       readOptions.Page,
+		TotalCount: int(quantity),
 		PageCount:  len(nodes),
 		TotalPages: getTotalPages(int(quantity), readOptions.PerPage),
 	}, nil
@@ -311,6 +317,7 @@ func (r *queryResolver) QueryApps(ctx context.Context, height *int, page *int, p
 	return &model.AppsResponse{
 		Apps:       convertMultipleIndexeraAppToGraphQLApp(apps),
 		Page:       readOptions.Page,
+		TotalCount: int(quantity),
 		PageCount:  len(apps),
 		TotalPages: getTotalPages(int(quantity), readOptions.PerPage),
 	}, nil

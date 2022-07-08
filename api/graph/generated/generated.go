@@ -49,6 +49,7 @@ type ComplexityRoot struct {
 		Accounts   func(childComplexity int) int
 		Page       func(childComplexity int) int
 		PageCount  func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 		TotalPages func(childComplexity int) int
 	}
 
@@ -56,6 +57,7 @@ type ComplexityRoot struct {
 		Apps       func(childComplexity int) int
 		Page       func(childComplexity int) int
 		PageCount  func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 		TotalPages func(childComplexity int) int
 	}
 
@@ -71,6 +73,7 @@ type ComplexityRoot struct {
 		Blocks     func(childComplexity int) int
 		Page       func(childComplexity int) int
 		PageCount  func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 		TotalPages func(childComplexity int) int
 	}
 
@@ -125,6 +128,7 @@ type ComplexityRoot struct {
 		Nodes      func(childComplexity int) int
 		Page       func(childComplexity int) int
 		PageCount  func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 		TotalPages func(childComplexity int) int
 	}
 
@@ -155,6 +159,7 @@ type ComplexityRoot struct {
 	TransactionsResponse struct {
 		Page         func(childComplexity int) int
 		PageCount    func(childComplexity int) int
+		TotalCount   func(childComplexity int) int
 		TotalPages   func(childComplexity int) int
 		Transactions func(childComplexity int) int
 	}
@@ -234,6 +239,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.AccountsResponse.PageCount(childComplexity), true
 
+	case "AccountsResponse.totalCount":
+		if e.complexity.AccountsResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AccountsResponse.TotalCount(childComplexity), true
+
 	case "AccountsResponse.totalPages":
 		if e.complexity.AccountsResponse.TotalPages == nil {
 			break
@@ -261,6 +273,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppsResponse.PageCount(childComplexity), true
+
+	case "AppsResponse.totalCount":
+		if e.complexity.AppsResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.AppsResponse.TotalCount(childComplexity), true
 
 	case "AppsResponse.totalPages":
 		if e.complexity.AppsResponse.TotalPages == nil {
@@ -324,6 +343,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BlocksResponse.PageCount(childComplexity), true
+
+	case "BlocksResponse.totalCount":
+		if e.complexity.BlocksResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.BlocksResponse.TotalCount(childComplexity), true
 
 	case "BlocksResponse.totalPages":
 		if e.complexity.BlocksResponse.TotalPages == nil {
@@ -577,6 +603,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NodesResponse.PageCount(childComplexity), true
 
+	case "NodesResponse.totalCount":
+		if e.complexity.NodesResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.NodesResponse.TotalCount(childComplexity), true
+
 	case "NodesResponse.totalPages":
 		if e.complexity.NodesResponse.TotalPages == nil {
 			break
@@ -788,6 +821,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TransactionsResponse.PageCount(childComplexity), true
+
+	case "TransactionsResponse.totalCount":
+		if e.complexity.TransactionsResponse.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TransactionsResponse.TotalCount(childComplexity), true
 
 	case "TransactionsResponse.totalPages":
 		if e.complexity.TransactionsResponse.TotalPages == nil {
@@ -1040,6 +1080,7 @@ type GraphQLApp {
 
 type BlocksResponse {
   blocks: [Block]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -1047,6 +1088,7 @@ type BlocksResponse {
 
 type TransactionsResponse {
   transactions: [GraphQLTransaction]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -1054,6 +1096,7 @@ type TransactionsResponse {
 
 type AccountsResponse {
   accounts: [GraphQLAccount]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -1061,6 +1104,7 @@ type AccountsResponse {
 
 type NodesResponse {
   nodes: [GraphQLNode]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -1068,6 +1112,7 @@ type NodesResponse {
 
 type AppsResponse {
   apps: [GraphQLApp]
+  totalCount: Int!
   pageCount: Int!
   page: Int!
   totalPages: Int!
@@ -1530,6 +1575,50 @@ func (ec *executionContext) fieldContext_AccountsResponse_accounts(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _AccountsResponse_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AccountsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AccountsResponse_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AccountsResponse_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AccountsResponse_pageCount(ctx context.Context, field graphql.CollectedField, obj *model.AccountsResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AccountsResponse_pageCount(ctx, field)
 	if err != nil {
@@ -1710,6 +1799,50 @@ func (ec *executionContext) fieldContext_AppsResponse_apps(ctx context.Context, 
 				return ec.fieldContext_GraphQLApp_stakedTokens(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GraphQLApp", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppsResponse_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.AppsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AppsResponse_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AppsResponse_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2115,6 +2248,50 @@ func (ec *executionContext) fieldContext_BlocksResponse_blocks(ctx context.Conte
 				return ec.fieldContext_Block_txCount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BlocksResponse_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BlocksResponse_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BlocksResponse_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BlocksResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3738,6 +3915,50 @@ func (ec *executionContext) fieldContext_NodesResponse_nodes(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _NodesResponse_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.NodesResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodesResponse_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NodesResponse_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NodesResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NodesResponse_pageCount(ctx context.Context, field graphql.CollectedField, obj *model.NodesResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NodesResponse_pageCount(ctx, field)
 	if err != nil {
@@ -4036,6 +4257,8 @@ func (ec *executionContext) fieldContext_Query_queryBlocks(ctx context.Context, 
 			switch field.Name {
 			case "blocks":
 				return ec.fieldContext_BlocksResponse_blocks(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BlocksResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_BlocksResponse_pageCount(ctx, field)
 			case "page":
@@ -4182,6 +4405,8 @@ func (ec *executionContext) fieldContext_Query_queryTransactionsByHeight(ctx con
 			switch field.Name {
 			case "transactions":
 				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TransactionsResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
 			case "page":
@@ -4244,6 +4469,8 @@ func (ec *executionContext) fieldContext_Query_queryTransactions(ctx context.Con
 			switch field.Name {
 			case "transactions":
 				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TransactionsResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
 			case "page":
@@ -4306,6 +4533,8 @@ func (ec *executionContext) fieldContext_Query_queryTransactionsByAddress(ctx co
 			switch field.Name {
 			case "transactions":
 				return ec.fieldContext_TransactionsResponse_transactions(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_TransactionsResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_TransactionsResponse_pageCount(ctx, field)
 			case "page":
@@ -4430,6 +4659,8 @@ func (ec *executionContext) fieldContext_Query_queryAccounts(ctx context.Context
 			switch field.Name {
 			case "accounts":
 				return ec.fieldContext_AccountsResponse_accounts(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_AccountsResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_AccountsResponse_pageCount(ctx, field)
 			case "page":
@@ -4558,6 +4789,8 @@ func (ec *executionContext) fieldContext_Query_queryNodes(ctx context.Context, f
 			switch field.Name {
 			case "nodes":
 				return ec.fieldContext_NodesResponse_nodes(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_NodesResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_NodesResponse_pageCount(ctx, field)
 			case "page":
@@ -4684,6 +4917,8 @@ func (ec *executionContext) fieldContext_Query_queryApps(ctx context.Context, fi
 			switch field.Name {
 			case "apps":
 				return ec.fieldContext_AppsResponse_apps(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_AppsResponse_totalCount(ctx, field)
 			case "pageCount":
 				return ec.fieldContext_AppsResponse_pageCount(ctx, field)
 			case "page":
@@ -5134,6 +5369,50 @@ func (ec *executionContext) fieldContext_TransactionsResponse_transactions(ctx c
 				return ec.fieldContext_GraphQLTransaction_amount(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type GraphQLTransaction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransactionsResponse_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.TransactionsResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TransactionsResponse_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TransactionsResponse_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransactionsResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7635,6 +7914,13 @@ func (ec *executionContext) _AccountsResponse(ctx context.Context, sel ast.Selec
 
 			out.Values[i] = ec._AccountsResponse_accounts(ctx, field, obj)
 
+		case "totalCount":
+
+			out.Values[i] = ec._AccountsResponse_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageCount":
 
 			out.Values[i] = ec._AccountsResponse_pageCount(ctx, field, obj)
@@ -7681,6 +7967,13 @@ func (ec *executionContext) _AppsResponse(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = ec._AppsResponse_apps(ctx, field, obj)
 
+		case "totalCount":
+
+			out.Values[i] = ec._AppsResponse_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageCount":
 
 			out.Values[i] = ec._AppsResponse_pageCount(ctx, field, obj)
@@ -7783,6 +8076,13 @@ func (ec *executionContext) _BlocksResponse(ctx context.Context, sel ast.Selecti
 
 			out.Values[i] = ec._BlocksResponse_blocks(ctx, field, obj)
 
+		case "totalCount":
+
+			out.Values[i] = ec._BlocksResponse_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageCount":
 
 			out.Values[i] = ec._BlocksResponse_pageCount(ctx, field, obj)
@@ -8149,6 +8449,13 @@ func (ec *executionContext) _NodesResponse(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._NodesResponse_nodes(ctx, field, obj)
 
+		case "totalCount":
+
+			out.Values[i] = ec._NodesResponse_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageCount":
 
 			out.Values[i] = ec._NodesResponse_pageCount(ctx, field, obj)
@@ -8544,6 +8851,13 @@ func (ec *executionContext) _TransactionsResponse(ctx context.Context, sel ast.S
 
 			out.Values[i] = ec._TransactionsResponse_transactions(ctx, field, obj)
 
+		case "totalCount":
+
+			out.Values[i] = ec._TransactionsResponse_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageCount":
 
 			out.Values[i] = ec._TransactionsResponse_pageCount(ctx, field, obj)

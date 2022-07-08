@@ -9,6 +9,7 @@ import (
 
 type AccountsResponse struct {
 	Accounts   []*GraphQLAccount `json:"accounts"`
+	TotalCount int               `json:"totalCount"`
 	PageCount  int               `json:"pageCount"`
 	Page       int               `json:"page"`
 	TotalPages int               `json:"totalPages"`
@@ -16,6 +17,7 @@ type AccountsResponse struct {
 
 type AppsResponse struct {
 	Apps       []*GraphQLApp `json:"apps"`
+	TotalCount int           `json:"totalCount"`
 	PageCount  int           `json:"pageCount"`
 	Page       int           `json:"page"`
 	TotalPages int           `json:"totalPages"`
@@ -23,6 +25,7 @@ type AppsResponse struct {
 
 type BlocksResponse struct {
 	Blocks     []*indexer.Block `json:"blocks"`
+	TotalCount int              `json:"totalCount"`
 	PageCount  int              `json:"pageCount"`
 	Page       int              `json:"page"`
 	TotalPages int              `json:"totalPages"`
@@ -72,6 +75,7 @@ type GraphQLTransaction struct {
 
 type NodesResponse struct {
 	Nodes      []*GraphQLNode `json:"nodes"`
+	TotalCount int            `json:"totalCount"`
 	PageCount  int            `json:"pageCount"`
 	Page       int            `json:"page"`
 	TotalPages int            `json:"totalPages"`
@@ -79,6 +83,7 @@ type NodesResponse struct {
 
 type TransactionsResponse struct {
 	Transactions []*GraphQLTransaction `json:"transactions"`
+	TotalCount   int                   `json:"totalCount"`
 	PageCount    int                   `json:"pageCount"`
 	Page         int                   `json:"page"`
 	TotalPages   int                   `json:"totalPages"`
