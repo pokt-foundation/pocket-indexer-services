@@ -44,7 +44,7 @@ type indexer interface {
 	IndexBlock(blockHeight int) error
 	IndexBlockNodes(blockHeight int) ([]string, error)
 	IndexBlockApps(blockHeight int) ([]string, error)
-	IndexAccount(address string, blockHeight int) error
+	IndexAccount(address string, blockHeight int, accountType indexerlib.AccountType) error
 }
 
 // provider interface of needed functions in the provider
@@ -303,7 +303,7 @@ func (s *service) indexBlockNodes(height int) {
 		}
 	}
 
-	s.indexAccounts(addresses, height)
+	s.indexAccounts(addresses, height, indexerlib.AccountTypeNode)
 
 	s.logInfoWithFields("Block nodes indexed successfully", "", height)
 }
@@ -342,7 +342,7 @@ func (s *service) indexBlockApps(height int) {
 		}
 	}
 
-	s.indexAccounts(addresses, height)
+	s.indexAccounts(addresses, height, indexerlib.AccountTypeApp)
 
 	s.logInfoWithFields("Block apps indexed successfully", "", height)
 }
@@ -368,7 +368,7 @@ func (s *service) indexBlockAppsWithRetries(height int, indexer indexer) ([]stri
 	return addresses, err
 }
 
-func (s *service) indexAccounts(addresses []string, height int) {
+func (s *service) indexAccounts(addresses []string, height int, accountType indexerlib.AccountType) {
 	for _, address := range addresses {
 		indexingProcesses.Add(1)
 
@@ -377,18 +377,18 @@ func (s *service) indexAccounts(addresses []string, height int) {
 			s.logErrorWithFields("Set concurrency for indexing accounts failed", height, err)
 		}
 
-		go s.indexAccount(address, height)
+		go s.indexAccount(address, height, accountType)
 	}
 }
 
-func (s *service) indexAccount(address string, height int) {
+func (s *service) indexAccount(address string, height int, accountType indexerlib.AccountType) {
 	defer releaseProcess()
 
-	err := s.indexAccountWithRetries(address, height, s.indexer)
+	err := s.indexAccountWithRetries(address, height, accountType, s.indexer)
 	if err != nil {
 		s.logErrorWithFields("Index account with main node failed", height, err)
 
-		err = s.indexAccountWithRetries(address, height, s.fallbackIndexer)
+		err = s.indexAccountWithRetries(address, height, accountType, s.fallbackIndexer)
 		if err != nil {
 			s.logErrorWithFields("Index account with fallback node failed", height, err)
 		}
@@ -397,12 +397,12 @@ func (s *service) indexAccount(address string, height int) {
 	s.logInfoWithFields("Account indexed successfully", address, height)
 }
 
-func (s *service) indexAccountWithRetries(address string, height int, indexer indexer) error {
+func (s *service) indexAccountWithRetries(address string, height int, accountType indexerlib.AccountType, indexer indexer) error {
 	var retry int64
 	var err error
 
 	for {
-		err = indexer.IndexAccount(address, height)
+		err = indexer.IndexAccount(address, height, accountType)
 		if err == nil {
 			break
 		}
