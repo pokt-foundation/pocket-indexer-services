@@ -1,7 +1,3 @@
-# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
 scalar Time
 scalar Map
 
@@ -131,14 +127,27 @@ type AppsResponse {
   totalPages: Int!
 }
 
+enum Order {
+  ASC
+  DESC
+}
+
 type Query {
   queryBlockByHash(hash: String!): Block
   queryBlockByHeight(height: Int!): Block
-  queryBlocks(page: Int, perPage: Int): BlocksResponse
+  queryBlocks(page: Int, perPage: Int, order: Order): BlocksResponse
   queryTransactionByHash(hash: String!): GraphQLTransaction
-  queryTransactionsByHeight(height: Int!, page: Int, perPage: Int): TransactionsResponse
+  queryTransactionsByHeight(
+    height: Int!
+    page: Int
+    perPage: Int
+  ): TransactionsResponse
   queryTransactions(page: Int, perPage: Int): TransactionsResponse
-  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): TransactionsResponse
+  queryTransactionsByAddress(
+    address: String!
+    page: Int
+    perPage: Int
+  ): TransactionsResponse
   queryAccountByAddress(address: String!, height: Int): GraphQLAccount
   queryAccounts(height: Int, page: Int, perPage: Int): AccountsResponse
   queryNodeByAddress(address: String!, height: Int): GraphQLNode
