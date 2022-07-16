@@ -142,7 +142,7 @@ type Query {
     page: Int
     perPage: Int
   ): TransactionsResponse
-  queryTransactions(page: Int, perPage: Int): TransactionsResponse
+  queryTransactions(page: Int, perPage: Int, order: Order): TransactionsResponse
   queryTransactionsByAddress(
     address: String!
     page: Int

@@ -144,7 +144,7 @@ type ComplexityRoot struct {
 		QueryNodeByAddress         func(childComplexity int, address string, height *int) int
 		QueryNodes                 func(childComplexity int, height *int, page *int, perPage *int) int
 		QueryTransactionByHash     func(childComplexity int, hash string) int
-		QueryTransactions          func(childComplexity int, page *int, perPage *int) int
+		QueryTransactions          func(childComplexity int, page *int, perPage *int, order *provider.Order) int
 		QueryTransactionsByAddress func(childComplexity int, address string, page *int, perPage *int) int
 		QueryTransactionsByHeight  func(childComplexity int, height int, page *int, perPage *int) int
 	}
@@ -194,7 +194,7 @@ type QueryResolver interface {
 	QueryBlocks(ctx context.Context, page *int, perPage *int, order *provider.Order) (*model.BlocksResponse, error)
 	QueryTransactionByHash(ctx context.Context, hash string) (*model.GraphQLTransaction, error)
 	QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error)
-	QueryTransactions(ctx context.Context, page *int, perPage *int) (*model.TransactionsResponse, error)
+	QueryTransactions(ctx context.Context, page *int, perPage *int, order *provider.Order) (*model.TransactionsResponse, error)
 	QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error)
 	QueryAccountByAddress(ctx context.Context, address string, height *int) (*model.GraphQLAccount, error)
 	QueryAccounts(ctx context.Context, height *int, page *int, perPage *int) (*model.AccountsResponse, error)
@@ -755,7 +755,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int)), true
+		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*provider.Order)), true
 
 	case "Query.queryTransactionsByAddress":
 		if e.complexity.Query.QueryTransactionsByAddress == nil {
@@ -1138,7 +1138,7 @@ type Query {
     page: Int
     perPage: Int
   ): TransactionsResponse
-  queryTransactions(page: Int, perPage: Int): TransactionsResponse
+  queryTransactions(page: Int, perPage: Int, order: Order): TransactionsResponse
   queryTransactionsByAddress(
     address: String!
     page: Int
@@ -1510,6 +1510,15 @@ func (ec *executionContext) field_Query_queryTransactions_args(ctx context.Conte
 		}
 	}
 	args["perPage"] = arg1
+	var arg2 *provider.Order
+	if tmp, ok := rawArgs["order"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑgoᚋproviderᚐOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["order"] = arg2
 	return args, nil
 }
 
@@ -4518,7 +4527,7 @@ func (ec *executionContext) _Query_queryTransactions(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int))
+		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*provider.Order))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
