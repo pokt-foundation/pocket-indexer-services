@@ -128,8 +128,8 @@ type AppsResponse {
 }
 
 enum Order {
-  ASC
-  DESC
+  asc
+  desc
 }
 
 type Query {

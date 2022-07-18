@@ -3,7 +3,6 @@ package graph
 import (
 	"strconv"
 
-	"github.com/pokt-foundation/pocket-go/provider"
 	indexerlib "github.com/pokt-foundation/pocket-indexer-lib"
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
@@ -16,7 +15,7 @@ import (
 var (
 	defaultPerPage = 1000
 	defaultPage    = 1
-	defaultOrder   = provider.DescendantOrder
+	defaultOrder   = postgresdriver.DescendantOrder
 )
 
 // reader interface of needed functions for the db reader

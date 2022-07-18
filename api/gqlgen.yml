@@ -36,6 +36,7 @@ skip_validation: true
 # if they match it will use them, otherwise it will generate them.
 autobind:
   - "github.com/pokt-foundation/pocket-indexer-lib"
+  - "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
   - "github.com/pokt-foundation/pocket-go/provider"
 
 # This section declares type mapping between the GraphQL and go type systems

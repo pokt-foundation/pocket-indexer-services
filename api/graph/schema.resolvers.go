@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 
-	"github.com/pokt-foundation/pocket-go/provider"
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/generated"
@@ -21,7 +20,7 @@ func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*in
 	return r.Reader.ReadBlockByHeight(height)
 }
 
-func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *provider.Order) (*model.BlocksResponse, error) {
+func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.BlocksResponse, error) {
 	options := &postgresdriver.ReadBlocksOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
@@ -98,7 +97,7 @@ func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height in
 	}, nil
 }
 
-func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int, order *provider.Order) (*model.TransactionsResponse, error) {
+func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.TransactionsResponse, error) {
 	options := &postgresdriver.ReadTransactionsOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
