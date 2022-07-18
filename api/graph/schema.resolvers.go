@@ -20,18 +20,21 @@ func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*in
 	return r.Reader.ReadBlockByHeight(height)
 }
 
-func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int) (*model.BlocksResponse, error) {
+func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.BlocksResponse, error) {
 	options := &postgresdriver.ReadBlocksOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
+		Order:   defaultOrder,
 	}
 
 	if page != nil {
 		options.Page = *page
 	}
-
 	if perPage != nil {
 		options.PerPage = *perPage
+	}
+	if order != nil {
+		options.Order = *order
 	}
 
 	blocks, err := r.Reader.ReadBlocks(options)
@@ -71,7 +74,6 @@ func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height in
 	if page != nil {
 		options.Page = *page
 	}
-
 	if perPage != nil {
 		options.PerPage = *perPage
 	}
@@ -95,18 +97,21 @@ func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height in
 	}, nil
 }
 
-func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int) (*model.TransactionsResponse, error) {
+func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.TransactionsResponse, error) {
 	options := &postgresdriver.ReadTransactionsOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
+		Order:   defaultOrder,
 	}
 
 	if page != nil {
 		options.Page = *page
 	}
-
 	if perPage != nil {
 		options.PerPage = *perPage
+	}
+	if order != nil {
+		options.Order = *order
 	}
 
 	transactions, err := r.Reader.ReadTransactions(options)

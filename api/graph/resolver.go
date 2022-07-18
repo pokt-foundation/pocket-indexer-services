@@ -15,6 +15,7 @@ import (
 var (
 	defaultPerPage = 1000
 	defaultPage    = 1
+	defaultOrder   = postgresdriver.DescendantOrder
 )
 
 // reader interface of needed functions for the db reader

@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/pokt-foundation/pocket-go/provider"
 	indexer "github.com/pokt-foundation/pocket-indexer-lib"
+	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -140,11 +141,11 @@ type ComplexityRoot struct {
 		QueryApps                  func(childComplexity int, height *int, page *int, perPage *int) int
 		QueryBlockByHash           func(childComplexity int, hash string) int
 		QueryBlockByHeight         func(childComplexity int, height int) int
-		QueryBlocks                func(childComplexity int, page *int, perPage *int) int
+		QueryBlocks                func(childComplexity int, page *int, perPage *int, order *postgresdriver.Order) int
 		QueryNodeByAddress         func(childComplexity int, address string, height *int) int
 		QueryNodes                 func(childComplexity int, height *int, page *int, perPage *int) int
 		QueryTransactionByHash     func(childComplexity int, hash string) int
-		QueryTransactions          func(childComplexity int, page *int, perPage *int) int
+		QueryTransactions          func(childComplexity int, page *int, perPage *int, order *postgresdriver.Order) int
 		QueryTransactionsByAddress func(childComplexity int, address string, page *int, perPage *int) int
 		QueryTransactionsByHeight  func(childComplexity int, height int, page *int, perPage *int) int
 	}
@@ -191,10 +192,10 @@ type ComplexityRoot struct {
 type QueryResolver interface {
 	QueryBlockByHash(ctx context.Context, hash string) (*indexer.Block, error)
 	QueryBlockByHeight(ctx context.Context, height int) (*indexer.Block, error)
-	QueryBlocks(ctx context.Context, page *int, perPage *int) (*model.BlocksResponse, error)
+	QueryBlocks(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.BlocksResponse, error)
 	QueryTransactionByHash(ctx context.Context, hash string) (*model.GraphQLTransaction, error)
 	QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error)
-	QueryTransactions(ctx context.Context, page *int, perPage *int) (*model.TransactionsResponse, error)
+	QueryTransactions(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.TransactionsResponse, error)
 	QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error)
 	QueryAccountByAddress(ctx context.Context, address string, height *int) (*model.GraphQLAccount, error)
 	QueryAccounts(ctx context.Context, height *int, page *int, perPage *int) (*model.AccountsResponse, error)
@@ -707,7 +708,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryBlocks(childComplexity, args["page"].(*int), args["perPage"].(*int)), true
+		return e.complexity.Query.QueryBlocks(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*postgresdriver.Order)), true
 
 	case "Query.queryNodeByAddress":
 		if e.complexity.Query.QueryNodeByAddress == nil {
@@ -755,7 +756,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int)), true
+		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*postgresdriver.Order)), true
 
 	case "Query.queryTransactionsByAddress":
 		if e.complexity.Query.QueryTransactionsByAddress == nil {
@@ -994,11 +995,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
-scalar Time
+	{Name: "../schema.graphqls", Input: `scalar Time
 scalar Map
 
 type Block {
@@ -1127,14 +1124,27 @@ type AppsResponse {
   totalPages: Int!
 }
 
+enum Order {
+  asc
+  desc
+}
+
 type Query {
   queryBlockByHash(hash: String!): Block
   queryBlockByHeight(height: Int!): Block
-  queryBlocks(page: Int, perPage: Int): BlocksResponse
+  queryBlocks(page: Int, perPage: Int, order: Order): BlocksResponse
   queryTransactionByHash(hash: String!): GraphQLTransaction
-  queryTransactionsByHeight(height: Int!, page: Int, perPage: Int): TransactionsResponse
-  queryTransactions(page: Int, perPage: Int): TransactionsResponse
-  queryTransactionsByAddress(address: String!, page: Int, perPage: Int): TransactionsResponse
+  queryTransactionsByHeight(
+    height: Int!
+    page: Int
+    perPage: Int
+  ): TransactionsResponse
+  queryTransactions(page: Int, perPage: Int, order: Order): TransactionsResponse
+  queryTransactionsByAddress(
+    address: String!
+    page: Int
+    perPage: Int
+  ): TransactionsResponse
   queryAccountByAddress(address: String!, height: Int): GraphQLAccount
   queryAccounts(height: Int, page: Int, perPage: Int): AccountsResponse
   queryNodeByAddress(address: String!, height: Int): GraphQLNode
@@ -1330,6 +1340,15 @@ func (ec *executionContext) field_Query_queryBlocks_args(ctx context.Context, ra
 		}
 	}
 	args["perPage"] = arg1
+	var arg2 *postgresdriver.Order
+	if tmp, ok := rawArgs["order"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["order"] = arg2
 	return args, nil
 }
 
@@ -1492,6 +1511,15 @@ func (ec *executionContext) field_Query_queryTransactions_args(ctx context.Conte
 		}
 	}
 	args["perPage"] = arg1
+	var arg2 *postgresdriver.Order
+	if tmp, ok := rawArgs["order"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["order"] = arg2
 	return args, nil
 }
 
@@ -4288,7 +4316,7 @@ func (ec *executionContext) _Query_queryBlocks(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryBlocks(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int))
+		return ec.resolvers.Query().QueryBlocks(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*postgresdriver.Order))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4500,7 +4528,7 @@ func (ec *executionContext) _Query_queryTransactions(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int))
+		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*postgresdriver.Order))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10123,6 +10151,23 @@ func (ec *executionContext) marshalONodesResponse2ᚖgithubᚗcomᚋpoktᚑfound
 		return graphql.Null
 	}
 	return ec._NodesResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, v interface{}) (*postgresdriver.Order, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := postgresdriver.Order(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, sel ast.SelectionSet, v *postgresdriver.Order) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOStdTx2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑgoᚋproviderᚐStdTx(ctx context.Context, sel ast.SelectionSet, v *provider.StdTx) graphql.Marshaler {
