@@ -1,0 +1,12 @@
+FROM golang:1.18-alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /go/src/github.com/pokt-foundation
+RUN git clone https://github.com/pokt-foundation/pocket-indexer-services
+
+WORKDIR /go/src/github.com/pokt-foundation/pocket-indexer-services
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o bin/api ./api/server.go
+
+FROM alpine:3.16.0
+WORKDIR /app
+COPY --from=builder /go/src/github.com/pokt-foundation/pocket-indexer-services/bin/api ./
+ENTRYPOINT ["/app/api"]
