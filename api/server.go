@@ -41,6 +41,7 @@ func main() {
 		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	}
 
+	log.Printf("Connection string: %s\n", connectionString)
 	log.Printf("Indexer server running in port:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
