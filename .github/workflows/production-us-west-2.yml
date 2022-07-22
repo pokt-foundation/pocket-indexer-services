@@ -74,7 +74,7 @@ jobs:
       - name: Deploy / us-west-2
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-us-west-2-server.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-us-west-2-service.outputs.task-definition }}
           service: indexer
           cluster: indexer
           wait-for-service-stability: true
