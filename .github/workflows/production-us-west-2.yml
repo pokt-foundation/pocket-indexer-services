@@ -67,8 +67,8 @@ jobs:
           container-name: indexer-api
           image: ${{ steps.build-image-api.outputs.image }}
           environment-variables: |
-            PORT=${{ secrets.API_PORT }}
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+            PORT=${{ secrets.API_PORT }}
 
 
       - name: Deploy / us-west-2
