@@ -29,7 +29,8 @@ func main() {
 		Reader: driver,
 	}}))
 
-	runPlayground := flag.Bool("p", false, "Flag to activate playground")
+	// TODO: Change to false
+	runPlayground := flag.Bool("p", true, "Flag to activate playground")
 
 	flag.Parse()
 
