@@ -52,7 +52,7 @@ jobs:
         with:
           task-definition: .aws/ecs-task-definition.json
           container-name: indexer-service
-          image: ${{ steps.build-image-collector.outputs.image }}
+          image: ${{ steps.build-image-service.outputs.image }}
           environment-variables: |
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
             CONCURRENCY=${{ secrets.CONCURRENCY }}
@@ -63,9 +63,9 @@ jobs:
         id: task-def-us-west-2-api
         uses: aws-actions/amazon-ecs-render-task-definition@master
         with:
-          task-definition: ${{ steps.task-def-us-west-2-collector.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-us-west-2-service.outputs.task-definition }}
           container-name: indexer-api
-          image: ${{ steps.build-image-api-server.outputs.image }}
+          image: ${{ steps.build-image-api.outputs.image }}
           environment-variables: |
             PORT=${{ secrets.API_PORT }}
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
