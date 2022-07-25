@@ -55,7 +55,7 @@ jobs:
           image: ${{ steps.build-image-api.outputs.image }}
           environment-variables: |
             CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
-            PORT=${{ secrets.API_PORT }}
+            PORT=80
 
 
       - name: Fill in the new image ID / us-west-2 - service
