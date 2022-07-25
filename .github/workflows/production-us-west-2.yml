@@ -46,18 +46,6 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Fill in the new image ID / us-west-2 - api
-        id: task-def-us-west-2-api
-        uses: aws-actions/amazon-ecs-render-task-definition@master
-        with:
-          task-definition: .aws/ecs-task-definition.json
-          container-name: indexer-api
-          image: ${{ steps.build-image-api.outputs.image }}
-          environment-variables: |
-            CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
-            PORT=80
-
-
       - name: Fill in the new image ID / us-west-2 - service
         id: task-def-us-west-2-service
         uses: aws-actions/amazon-ecs-render-task-definition@master
@@ -71,10 +59,21 @@ jobs:
             MAIN_NODE=${{ secrets.MAIN_NODE }}
             FALLBACK_NODE=${{ secrets.FALLBACK_NODE }}
 
+      - name: Fill in the new image ID / us-west-2 - api
+        id: task-def-us-west-2-api
+        uses: aws-actions/amazon-ecs-render-task-definition@master
+        with:
+          task-definition: ${{ steps.task-def-us-west-2-collector.outputs.task-definition }}
+          container-name: indexer-api
+          image: ${{ steps.build-image-api.outputs.image }}
+          environment-variables: |
+            CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}
+            PORT=80
+
       - name: Deploy / us-west-2
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-us-west-2-service.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-us-west-2-api.outputs.task-definition }}
           service: indexer
           cluster: indexer
           wait-for-service-stability: true
