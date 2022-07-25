@@ -63,7 +63,7 @@ jobs:
         id: task-def-us-west-2-api
         uses: aws-actions/amazon-ecs-render-task-definition@master
         with:
-          task-definition: ${{ steps.task-def-us-west-2-collector.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-us-west-2-service.outputs.task-definition }}
           container-name: indexer-api
           image: ${{ steps.build-image-api.outputs.image }}
           environment-variables: |
