@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    name: Relay meter
+    name: Pocket Indexer Services
     runs-on: ubuntu-latest
 
     steps:
