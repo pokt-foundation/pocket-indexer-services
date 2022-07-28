@@ -29,3 +29,18 @@ func GetString(varName string, defaultValue string) string {
 
 	return val
 }
+
+// GetBool gets the environment var as a bool
+func GetBool(varName string, defaultValue bool) bool {
+	val, _ := os.LookupEnv(varName)
+	if val == "" {
+		return defaultValue
+	}
+
+	iVal, err := strconv.ParseBool(val)
+	if err != nil {
+		return defaultValue
+	}
+
+	return iVal
+}
