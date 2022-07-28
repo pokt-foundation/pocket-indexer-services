@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"sync"
 	"time"
@@ -31,6 +30,10 @@ var (
 	concurrency      = environment.GetInt64("CONCURRENCY", 100)
 	reqInterval      = environment.GetInt64("REQUEST_INTERVAL", 5000)
 	connectionString = environment.GetString("CONNECTION_STRING", "")
+	mainNode         = environment.GetString("MAIN_NODE", "https://mainnet-1.nodes.pokt.network:4201")
+	fallbackNode     = environment.GetString("FALLBACK_NODE", "https://mainnet-2.nodes.pokt.network:4202")
+	fromHeight       = int(environment.GetInt64("FROM_HEIGHT", -1))
+	toHeight         = int(environment.GetInt64("TO_HEIGHT", -1))
 )
 
 func init() {
@@ -417,35 +420,6 @@ func (s *service) indexAccountWithRetries(address string, height int, accountTyp
 	return err
 }
 
-func parseParams() (string, string, int, int) {
-	mainNode := flag.String("node", "", "Main node URL to index")
-	fallbackNode := flag.String("fallback", "", "Fallback node URL to index in case main one fails")
-	fromHeight := flag.Int("from", -1, "Starting height to index, optional param")
-	toHeight := flag.Int("to", -1, "Final height to index, optional param")
-
-	flag.Parse()
-
-	return parseEnvOfParams(*mainNode, *fallbackNode, *fromHeight, *toHeight)
-}
-
-// flag params can also be passed as envs
-func parseEnvOfParams(mainNode, fallbackNode string, fromHeight, toHeight int) (string, string, int, int) {
-	if mainNode == "" {
-		mainNode = environment.GetString("MAIN_NODE", "")
-	}
-	if fallbackNode == "" {
-		fallbackNode = environment.GetString("FALLBACK_NODE", "")
-	}
-	if fromHeight < 0 {
-		fromHeight = int(environment.GetInt64("FROM_HEIGHT", -1))
-	}
-	if toHeight < 0 {
-		toHeight = int(environment.GetInt64("TO_HEIGHT", -1))
-	}
-
-	return mainNode, fallbackNode, fromHeight, toHeight
-}
-
 func getFallbacks(fallbackNode string, driver driver) (provider, indexer) {
 	if fallbackNode == "" {
 		return nil, nil
@@ -475,8 +449,6 @@ func (s *service) setOptionalParams(fromHeight, toHeight int) error {
 }
 
 func setupService() (*service, error) {
-	mainNode, fallbackNode, fromHeight, toHeight := parseParams()
-
 	mainProvider := providerlib.NewProvider(mainNode, nil)
 
 	mainProvider.UpdateRequestConfig(int(clientRetries), time.Duration(clientTimeout)*time.Millisecond)
