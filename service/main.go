@@ -425,7 +425,25 @@ func parseParams() (string, string, int, int) {
 
 	flag.Parse()
 
-	return *mainNode, *fallbackNode, *fromHeight, *toHeight
+	return parseEnvOfParams(*mainNode, *fallbackNode, *fromHeight, *toHeight)
+}
+
+// flag params can also be passed as envs
+func parseEnvOfParams(mainNode, fallbackNode string, fromHeight, toHeight int) (string, string, int, int) {
+	if mainNode == "" {
+		mainNode = environment.GetString("MAIN_NODE", "")
+	}
+	if fallbackNode == "" {
+		fallbackNode = environment.GetString("FALLBACK_NODE", "")
+	}
+	if fromHeight < 0 {
+		fromHeight = int(environment.GetInt64("FROM_HEIGHT", -1))
+	}
+	if toHeight < 0 {
+		toHeight = int(environment.GetInt64("TO_HEIGHT", -1))
+	}
+
+	return mainNode, fallbackNode, fromHeight, toHeight
 }
 
 func getFallbacks(fallbackNode string, driver driver) (provider, indexer) {

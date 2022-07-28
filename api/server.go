@@ -29,7 +29,8 @@ func main() {
 		Reader: driver,
 	}}))
 
-	runPlayground := flag.Bool("p", false, "Flag to activate playground")
+	// TODO: Change to false
+	runPlayground := flag.Bool("p", true, "Flag to activate playground")
 
 	flag.Parse()
 
@@ -40,5 +41,6 @@ func main() {
 		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	}
 
+	log.Printf("Indexer server running in port:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

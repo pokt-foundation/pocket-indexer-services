@@ -1,7 +1,9 @@
 FROM golang:1.18-alpine AS builder
 RUN apk add --no-cache git
 WORKDIR /go/src/github.com/pokt-foundation
-RUN git clone https://github.com/pokt-foundation/pocket-indexer-services
+# RUN git clone https://github.com/pokt-foundation/pocket-indexer-services
+
+COPY . /go/src/github.com/pokt-foundation/pocket-indexer-services
 
 WORKDIR /go/src/github.com/pokt-foundation/pocket-indexer-services
 RUN CGO_ENABLED=0 GOOS=linux go build -a -o bin/service ./service/main.go
