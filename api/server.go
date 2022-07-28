@@ -19,6 +19,16 @@ var (
 	port             = environment.GetString("PORT", "8080")
 )
 
+func healthCheck() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("Pocket Indexer API is up and running!"))
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func main() {
 	driver, err := postgresdriver.NewPostgresDriverFromConnectionString(connectionString)
 	if err != nil {
@@ -29,16 +39,16 @@ func main() {
 		Reader: driver,
 	}}))
 
-	// TODO: Change to false
-	runPlayground := flag.Bool("p", true, "Flag to activate playground")
+	runPlayground := flag.Bool("p", false, "Flag to activate playground")
 
 	flag.Parse()
 
+	http.Handle("/", healthCheck())
 	http.Handle("/query", srv)
 
 	if *runPlayground {
-		http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+		http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+		log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
 	}
 
 	log.Printf("Indexer server running in port:%s\n", port)
