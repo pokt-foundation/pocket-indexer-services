@@ -58,6 +58,7 @@ jobs:
             CONCURRENCY=${{ secrets.CONCURRENCY }}
             MAIN_NODE=${{ secrets.MAIN_NODE }}
             FALLBACK_NODE=${{ secrets.FALLBACK_NODE }}
+            RUN_PLAYGROUND=${{ secrets.RUN_PLAYGROUND }}
 
       - name: Fill in the new image ID / us-west-2 - api
         id: task-def-us-west-2-api
