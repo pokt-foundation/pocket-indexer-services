@@ -16,7 +16,7 @@ import (
 var (
 	connectionString = environment.GetString("CONNECTION_STRING", "")
 	port             = environment.GetString("PORT", "8080")
-	runPlayground    = environment.GetBool("RUN_PLAYGROUND", false)
+	runPlayground    = environment.GetBool("RUN_PLAYGROUND", true)
 )
 
 func healthCheck() http.HandlerFunc {
