@@ -10,7 +10,7 @@ import (
 	providerlib "github.com/pokt-foundation/pocket-go/provider"
 	indexerlib "github.com/pokt-foundation/pocket-indexer-lib"
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
-	"github.com/pokt-foundation/pocket-indexer-services/pkg/environment"
+	"github.com/pokt-foundation/utils-go/environment"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 )
