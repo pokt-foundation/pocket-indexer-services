@@ -1,3 +1,4 @@
+// Package main runs the GraphQL API service for the indexer
 package main
 
 import (

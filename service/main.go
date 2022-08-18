@@ -1,3 +1,4 @@
+// Package main runs the service for indexing fields
 package main
 
 import (
