@@ -1,3 +1,4 @@
+// Package main runs the GraphQL API service for the indexer
 package main
 
 import (
@@ -10,7 +11,7 @@ import (
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/generated"
-	"github.com/pokt-foundation/pocket-indexer-services/pkg/environment"
+	"github.com/pokt-foundation/utils-go/environment"
 )
 
 var (
