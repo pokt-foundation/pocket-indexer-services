@@ -16,6 +16,10 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
+const (
+	concurrentFunctions = 5
+)
+
 var (
 	errToHeightLowerThanFromHeight          = errors.New("to height is lower than from height")
 	errInputHeightIsHigherThanCurrentHeight = errors.New("input height is higher than current height")
@@ -199,9 +203,9 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 	semaphoreLimiter = semaphore.NewWeighted(s.concurrency)
 
 	for _, height := range heightsToIndex {
-		indexingProcesses.Add(5)
+		indexingProcesses.Add(concurrentFunctions)
 
-		err := semaphoreLimiter.Acquire(context.Background(), 5)
+		err := semaphoreLimiter.Acquire(context.Background(), concurrentFunctions)
 		if err != nil {
 			return err
 		}
