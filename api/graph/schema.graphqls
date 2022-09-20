@@ -65,7 +65,6 @@ type TxResult {
 type GraphQLAccount {
   address: String!
   height: Int!
-  accountType: String!
   balance: String!
   balanceDenomination: String!
 }

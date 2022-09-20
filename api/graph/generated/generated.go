@@ -84,7 +84,6 @@ type ComplexityRoot struct {
 	}
 
 	GraphQLAccount struct {
-		AccountType         func(childComplexity int) int
 		Address             func(childComplexity int) int
 		Balance             func(childComplexity int) int
 		BalanceDenomination func(childComplexity int) int
@@ -373,13 +372,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Fee.Denom(childComplexity), true
-
-	case "GraphQLAccount.accountType":
-		if e.complexity.GraphQLAccount.AccountType == nil {
-			break
-		}
-
-		return e.complexity.GraphQLAccount.AccountType(childComplexity), true
 
 	case "GraphQLAccount.address":
 		if e.complexity.GraphQLAccount.Address == nil {
@@ -1062,7 +1054,6 @@ type TxResult {
 type GraphQLAccount {
   address: String!
   height: Int!
-  accountType: String!
   balance: String!
   balanceDenomination: String!
 }
@@ -1601,8 +1592,6 @@ func (ec *executionContext) fieldContext_AccountsResponse_accounts(ctx context.C
 				return ec.fieldContext_GraphQLAccount_address(ctx, field)
 			case "height":
 				return ec.fieldContext_GraphQLAccount_height(ctx, field)
-			case "accountType":
-				return ec.fieldContext_GraphQLAccount_accountType(ctx, field)
 			case "balance":
 				return ec.fieldContext_GraphQLAccount_balance(ctx, field)
 			case "balanceDenomination":
@@ -2639,50 +2628,6 @@ func (ec *executionContext) fieldContext_GraphQLAccount_height(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _GraphQLAccount_accountType(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLAccount) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_GraphQLAccount_accountType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccountType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_GraphQLAccount_accountType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "GraphQLAccount",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4682,8 +4627,6 @@ func (ec *executionContext) fieldContext_Query_queryAccountByAddress(ctx context
 				return ec.fieldContext_GraphQLAccount_address(ctx, field)
 			case "height":
 				return ec.fieldContext_GraphQLAccount_height(ctx, field)
-			case "accountType":
-				return ec.fieldContext_GraphQLAccount_accountType(ctx, field)
 			case "balance":
 				return ec.fieldContext_GraphQLAccount_balance(ctx, field)
 			case "balanceDenomination":
@@ -8255,13 +8198,6 @@ func (ec *executionContext) _GraphQLAccount(ctx context.Context, sel ast.Selecti
 		case "height":
 
 			out.Values[i] = ec._GraphQLAccount_height(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "accountType":
-
-			out.Values[i] = ec._GraphQLAccount_accountType(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

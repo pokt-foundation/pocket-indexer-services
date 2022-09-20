@@ -30,9 +30,9 @@ var (
 	serviceRetries   = environment.GetInt64("SERVICE_RETRIES", 3)
 	concurrency      = environment.GetInt64("CONCURRENCY", 100)
 	reqInterval      = environment.GetInt64("REQUEST_INTERVAL", 5000)
-	connectionString = environment.GetString("CONNECTION_STRING", "")
-	mainNode         = environment.GetString("MAIN_NODE", "")
-	fallbackNode     = environment.GetString("FALLBACK_NODE", "")
+	connectionString = environment.MustGetString("CONNECTION_STRING")
+	mainNode         = environment.MustGetString("MAIN_NODE")
+	fallbackNode     = environment.MustGetString("FALLBACK_NODE")
 	fromHeight       = int(environment.GetInt64("FROM_HEIGHT", -1))
 	toHeight         = int(environment.GetInt64("TO_HEIGHT", -1))
 )
@@ -48,14 +48,14 @@ type indexer interface {
 	IndexBlock(blockHeight int) error
 	IndexBlockNodes(blockHeight int) ([]string, error)
 	IndexBlockApps(blockHeight int) ([]string, error)
-	IndexAccount(address string, blockHeight int, accountType indexerlib.AccountType) error
+	IndexAccounts(blockHeight int) ([]string, error)
 }
 
 // provider interface of needed functions in the provider
 type provider interface {
 	GetBlock(blockNumber int) (*providerlib.GetBlockOutput, error)
 	GetBlockTransactions(options *providerlib.GetBlockTransactionsOptions) (*providerlib.GetBlockTransactionsOutput, error)
-	GetAccount(address string, options *providerlib.GetAccountOptions) (*providerlib.GetAccountOutput, error)
+	GetAccounts(options *providerlib.GetAccountsOptions) (*providerlib.GetAccountsOutput, error)
 	GetNodes(options *providerlib.GetNodesOptions) (*providerlib.GetNodesOutput, error)
 	GetApps(options *providerlib.GetAppsOptions) (*providerlib.GetAppsOutput, error)
 	GetBlockHeight() (int, error)
@@ -67,7 +67,7 @@ type driver interface {
 	GetMaxHeightInBlocks() (int64, error)
 	WriteBlock(block *indexerlib.Block) error
 	WriteTransactions(txs []*indexerlib.Transaction) error
-	WriteAccount(account *indexerlib.Account) error
+	WriteAccounts(accounts []*indexerlib.Account) error
 	WriteNodes(nodes []*indexerlib.Node) error
 	WriteApps(apps []*indexerlib.App) error
 }
@@ -199,14 +199,15 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 	semaphoreLimiter = semaphore.NewWeighted(s.concurrency)
 
 	for _, height := range heightsToIndex {
-		indexingProcesses.Add(4)
+		indexingProcesses.Add(5)
 
-		err := semaphoreLimiter.Acquire(context.Background(), 4)
+		err := semaphoreLimiter.Acquire(context.Background(), 5)
 		if err != nil {
 			return err
 		}
 
 		go s.indexBlock(height)
+		go s.indexAccounts(height)
 		go s.indexBlockTransactions(height)
 		go s.indexBlockNodes(height)
 		go s.indexBlockApps(height)
@@ -232,6 +233,8 @@ func (s *service) indexBlock(height int) {
 		err = s.indexBlockWithRetries(height, s.fallbackIndexer)
 		if err != nil {
 			s.logErrorWithFields("Index block with fallback node failed", height, err)
+
+			return
 		}
 	}
 
@@ -258,16 +261,56 @@ func (s *service) indexBlockWithRetries(height int, indexer indexer) error {
 	return err
 }
 
+func (s *service) indexAccounts(height int) {
+	defer releaseProcess()
+
+	err := s.indexAccountsWithRetries(height, s.indexer)
+	if err != nil {
+		s.logErrorWithFields("Index accounts with main node failed", height, err)
+
+		err = s.indexAccountsWithRetries(height, s.fallbackIndexer)
+		if err != nil {
+			s.logErrorWithFields("Index accounts with fallback node failed", height, err)
+
+			return
+		}
+	}
+
+	s.logInfoWithFields("Block accounts indexed successfully", "", height)
+}
+
+func (s *service) indexAccountsWithRetries(height int, indexer indexer) error {
+	var retry int64
+	var err error
+
+	for {
+		_, err = indexer.IndexAccounts(height)
+		if err == nil {
+			break
+		}
+
+		retry++
+
+		if retry == s.retries {
+			break
+		}
+	}
+
+	return err
+}
+
 func (s *service) indexBlockTransactions(height int) {
 	defer releaseProcess()
 
 	err := s.indexBlockTransactionsWithRetries(height, s.indexer)
 	if err != nil {
-		s.logErrorWithFields("Index block with main node failed", height, err)
+		s.logErrorWithFields("Index block transactions with main node failed", height, err)
 
 		err = s.indexBlockTransactionsWithRetries(height, s.fallbackIndexer)
 		if err != nil {
-			s.logErrorWithFields("Index block with fallback node failed", height, err)
+			s.logErrorWithFields("Index block transactions with fallback node failed", height, err)
+
+			return
 		}
 	}
 
@@ -297,28 +340,27 @@ func (s *service) indexBlockTransactionsWithRetries(height int, indexer indexer)
 func (s *service) indexBlockNodes(height int) {
 	defer releaseProcess()
 
-	addresses, err := s.indexBlockNodesWithRetries(height, s.indexer)
+	err := s.indexBlockNodesWithRetries(height, s.indexer)
 	if err != nil {
 		s.logErrorWithFields("Index nodes with main node failed", height, err)
 
-		addresses, err = s.indexBlockNodesWithRetries(height, s.fallbackIndexer)
+		err = s.indexBlockNodesWithRetries(height, s.fallbackIndexer)
 		if err != nil {
 			s.logErrorWithFields("Index nodes with fallback node failed", height, err)
+
+			return
 		}
 	}
-
-	s.indexAccounts(addresses, height, indexerlib.AccountTypeNode)
 
 	s.logInfoWithFields("Block nodes indexed successfully", "", height)
 }
 
-func (s *service) indexBlockNodesWithRetries(height int, indexer indexer) ([]string, error) {
+func (s *service) indexBlockNodesWithRetries(height int, indexer indexer) error {
 	var retry int64
 	var err error
-	var addresses []string
 
 	for {
-		addresses, err = indexer.IndexBlockNodes(height)
+		_, err = indexer.IndexBlockNodes(height)
 		if err == nil {
 			break
 		}
@@ -330,83 +372,33 @@ func (s *service) indexBlockNodesWithRetries(height int, indexer indexer) ([]str
 		}
 	}
 
-	return addresses, err
+	return err
 }
 
 func (s *service) indexBlockApps(height int) {
 	defer releaseProcess()
 
-	addresses, err := s.indexBlockAppsWithRetries(height, s.indexer)
+	err := s.indexBlockAppsWithRetries(height, s.indexer)
 	if err != nil {
 		s.logErrorWithFields("Index apps with main node failed", height, err)
 
-		addresses, err = s.indexBlockAppsWithRetries(height, s.fallbackIndexer)
+		err = s.indexBlockAppsWithRetries(height, s.fallbackIndexer)
 		if err != nil {
 			s.logErrorWithFields("Index apps with fallback node failed", height, err)
+
+			return
 		}
 	}
-
-	s.indexAccounts(addresses, height, indexerlib.AccountTypeApp)
 
 	s.logInfoWithFields("Block apps indexed successfully", "", height)
 }
 
-func (s *service) indexBlockAppsWithRetries(height int, indexer indexer) ([]string, error) {
-	var retry int64
-	var err error
-	var addresses []string
-
-	for {
-		addresses, err = indexer.IndexBlockApps(height)
-		if err == nil {
-			break
-		}
-
-		retry++
-
-		if retry == s.retries {
-			break
-		}
-	}
-
-	return addresses, err
-}
-
-func (s *service) indexAccounts(addresses []string, height int, accountType indexerlib.AccountType) {
-	for _, address := range addresses {
-		indexingProcesses.Add(1)
-
-		err := semaphoreLimiter.Acquire(context.Background(), 1)
-		if err != nil {
-			s.logErrorWithFields("Set concurrency for indexing accounts failed", height, err)
-		}
-
-		go s.indexAccount(address, height, accountType)
-	}
-}
-
-func (s *service) indexAccount(address string, height int, accountType indexerlib.AccountType) {
-	defer releaseProcess()
-
-	err := s.indexAccountWithRetries(address, height, accountType, s.indexer)
-	if err != nil {
-		s.logErrorWithFields("Index account with main node failed", height, err)
-
-		err = s.indexAccountWithRetries(address, height, accountType, s.fallbackIndexer)
-		if err != nil {
-			s.logErrorWithFields("Index account with fallback node failed", height, err)
-		}
-	}
-
-	s.logInfoWithFields("Account indexed successfully", address, height)
-}
-
-func (s *service) indexAccountWithRetries(address string, height int, accountType indexerlib.AccountType, indexer indexer) error {
+func (s *service) indexBlockAppsWithRetries(height int, indexer indexer) error {
 	var retry int64
 	var err error
 
 	for {
-		err = indexer.IndexAccount(address, height, accountType)
+		_, err = indexer.IndexBlockApps(height)
 		if err == nil {
 			break
 		}
