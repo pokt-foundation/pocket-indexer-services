@@ -34,7 +34,6 @@ type BlocksResponse struct {
 type GraphQLAccount struct {
 	Address             string `json:"address"`
 	Height              int    `json:"height"`
-	AccountType         string `json:"accountType"`
 	Balance             string `json:"balance"`
 	BalanceDenomination string `json:"balanceDenomination"`
 }

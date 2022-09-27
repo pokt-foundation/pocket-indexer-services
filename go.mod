@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.9
-	github.com/pokt-foundation/pocket-go v0.10.3
-	github.com/pokt-foundation/pocket-indexer-lib v0.4.1
-	github.com/pokt-foundation/utils-go v0.2.0
+	github.com/pokt-foundation/pocket-go v0.10.6
+	github.com/pokt-foundation/pocket-indexer-lib v0.5.1
+	github.com/pokt-foundation/utils-go v0.2.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/vektah/gqlparser/v2 v2.4.4
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29

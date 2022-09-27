@@ -87,7 +87,6 @@ func convertIndexerAccountToGraphQLAccount(account *indexerlib.Account) *model.G
 	return &model.GraphQLAccount{
 		Address:             account.Address,
 		Height:              account.Height,
-		AccountType:         string(account.AccountType),
 		Balance:             account.Balance.String(),
 		BalanceDenomination: account.BalanceDenomination,
 	}
