@@ -4,7 +4,7 @@ package model
 
 import (
 	"github.com/pokt-foundation/pocket-go/provider"
-	indexer "github.com/pokt-foundation/pocket-indexer-lib"
+	"github.com/pokt-foundation/pocket-indexer-lib/types"
 )
 
 type AccountsResponse struct {
@@ -24,7 +24,7 @@ type AppsResponse struct {
 }
 
 type BlocksResponse struct {
-	Blocks     []*indexer.Block `json:"blocks"`
+	Blocks     []*types.Block `json:"blocks"`
 	TotalCount int              `json:"totalCount"`
 	PageCount  int              `json:"pageCount"`
 	Page       int              `json:"page"`
