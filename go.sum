@@ -57,8 +57,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pokt-foundation/pocket-go v0.10.6 h1:8yd1zCZACxCHYA3QxX+qaozD1krBodvWkq9+KGy4Ukg=
 github.com/pokt-foundation/pocket-go v0.10.6/go.mod h1:d+iYexqAiluTC8SxgcXjeX1B7cYdApFQYrXylXQ0zZ0=
-github.com/pokt-foundation/pocket-indexer-lib v0.5.2 h1:Ap+hAPg9NRbk/xp51oQDGfTXdPH8kU1C5pGYogWk9Yw=
-github.com/pokt-foundation/pocket-indexer-lib v0.5.2/go.mod h1:PJac7bSCTlVCBR+DOCBn0R7h/Rnx5f6a2sZf0c8V7G0=
+github.com/pokt-foundation/pocket-indexer-lib v0.6.0 h1:rJAyBLNTbOui3hctyy3+Xwz9vh9QtGI7RyveGZdWuxs=
+github.com/pokt-foundation/pocket-indexer-lib v0.6.0/go.mod h1:PJac7bSCTlVCBR+DOCBn0R7h/Rnx5f6a2sZf0c8V7G0=
 github.com/pokt-foundation/utils-go v0.2.4 h1:1OntN55cxnbvpRjI7g5ndk9duZ9B7SPwe0EJsHKXZ7g=
 github.com/pokt-foundation/utils-go v0.2.4/go.mod h1:c92FV9S9qY4PEyeOv4fGkI9FTZSv8oh1MiARGC+BC2E=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=

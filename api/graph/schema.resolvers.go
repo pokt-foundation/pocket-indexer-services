@@ -6,22 +6,21 @@ package graph
 import (
 	"context"
 
-	indexer "github.com/pokt-foundation/pocket-indexer-lib"
-	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
+	"github.com/pokt-foundation/pocket-indexer-lib/types"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/generated"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 )
 
-func (r *queryResolver) QueryBlockByHash(ctx context.Context, hash string) (*indexer.Block, error) {
+func (r *queryResolver) QueryBlockByHash(ctx context.Context, hash string) (*types.Block, error) {
 	return r.Reader.ReadBlockByHash(hash)
 }
 
-func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*indexer.Block, error) {
+func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*types.Block, error) {
 	return r.Reader.ReadBlockByHeight(height)
 }
 
-func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.BlocksResponse, error) {
-	options := &postgresdriver.ReadBlocksOptions{
+func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.BlocksResponse, error) {
+	options := &types.ReadBlocksOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 		Order:   defaultOrder,
@@ -66,7 +65,7 @@ func (r *queryResolver) QueryTransactionByHash(ctx context.Context, hash string)
 }
 
 func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error) {
-	options := &postgresdriver.ReadTransactionsByHeightOptions{
+	options := &types.ReadTransactionsByHeightOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 	}
@@ -97,8 +96,8 @@ func (r *queryResolver) QueryTransactionsByHeight(ctx context.Context, height in
 	}, nil
 }
 
-func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.TransactionsResponse, error) {
-	options := &postgresdriver.ReadTransactionsOptions{
+func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.TransactionsResponse, error) {
+	options := &types.ReadTransactionsOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 		Order:   defaultOrder,
@@ -134,7 +133,7 @@ func (r *queryResolver) QueryTransactions(ctx context.Context, page *int, perPag
 }
 
 func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error) {
-	options := &postgresdriver.ReadTransactionsByAddressOptions{
+	options := &types.ReadTransactionsByAddressOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 	}
@@ -167,7 +166,7 @@ func (r *queryResolver) QueryTransactionsByAddress(ctx context.Context, address 
 }
 
 func (r *queryResolver) QueryAccountByAddress(ctx context.Context, address string, height *int) (*model.GraphQLAccount, error) {
-	options := &postgresdriver.ReadAccountByAddressOptions{}
+	options := &types.ReadAccountByAddressOptions{}
 
 	if height != nil {
 		options.Height = *height
@@ -182,11 +181,11 @@ func (r *queryResolver) QueryAccountByAddress(ctx context.Context, address strin
 }
 
 func (r *queryResolver) QueryAccounts(ctx context.Context, height *int, page *int, perPage *int) (*model.AccountsResponse, error) {
-	readOptions := &postgresdriver.ReadAccountsOptions{
+	readOptions := &types.ReadAccountsOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 	}
-	quantityOptions := &postgresdriver.GetAccountsQuantityOptions{}
+	quantityOptions := &types.GetAccountsQuantityOptions{}
 
 	if height != nil {
 		readOptions.Height = *height
@@ -221,7 +220,7 @@ func (r *queryResolver) QueryAccounts(ctx context.Context, height *int, page *in
 }
 
 func (r *queryResolver) QueryNodeByAddress(ctx context.Context, address string, height *int) (*model.GraphQLNode, error) {
-	options := &postgresdriver.ReadNodeByAddressOptions{}
+	options := &types.ReadNodeByAddressOptions{}
 
 	if height != nil {
 		options.Height = *height
@@ -236,11 +235,11 @@ func (r *queryResolver) QueryNodeByAddress(ctx context.Context, address string, 
 }
 
 func (r *queryResolver) QueryNodes(ctx context.Context, height *int, page *int, perPage *int) (*model.NodesResponse, error) {
-	readOptions := &postgresdriver.ReadNodesOptions{
+	readOptions := &types.ReadNodesOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 	}
-	quantityOptions := &postgresdriver.GetNodesQuantityOptions{}
+	quantityOptions := &types.GetNodesQuantityOptions{}
 
 	if height != nil {
 		readOptions.Height = *height
@@ -275,7 +274,7 @@ func (r *queryResolver) QueryNodes(ctx context.Context, height *int, page *int, 
 }
 
 func (r *queryResolver) QueryAppByAddress(ctx context.Context, address string, height *int) (*model.GraphQLApp, error) {
-	options := &postgresdriver.ReadAppByAddressOptions{}
+	options := &types.ReadAppByAddressOptions{}
 
 	if height != nil {
 		options.Height = *height
@@ -290,11 +289,11 @@ func (r *queryResolver) QueryAppByAddress(ctx context.Context, address string, h
 }
 
 func (r *queryResolver) QueryApps(ctx context.Context, height *int, page *int, perPage *int) (*model.AppsResponse, error) {
-	readOptions := &postgresdriver.ReadAppsOptions{
+	readOptions := &types.ReadAppsOptions{
 		Page:    defaultPage,
 		PerPage: defaultPerPage,
 	}
-	quantityOptions := &postgresdriver.GetAppsQuantityOptions{}
+	quantityOptions := &types.GetAppsQuantityOptions{}
 
 	if height != nil {
 		readOptions.Height = *height

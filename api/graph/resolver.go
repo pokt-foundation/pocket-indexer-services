@@ -3,8 +3,7 @@ package graph
 import (
 	"strconv"
 
-	indexerlib "github.com/pokt-foundation/pocket-indexer-lib"
-	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
+	"github.com/pokt-foundation/pocket-indexer-lib/types"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 )
 
@@ -15,31 +14,31 @@ import (
 var (
 	defaultPerPage = 1000
 	defaultPage    = 1
-	defaultOrder   = postgresdriver.DescendantOrder
+	defaultOrder   = types.DescendantOrder
 )
 
 // reader interface of needed functions for the db reader
 type reader interface {
-	ReadTransactions(options *postgresdriver.ReadTransactionsOptions) ([]*indexerlib.Transaction, error)
+	ReadTransactions(options *types.ReadTransactionsOptions) ([]*types.Transaction, error)
 	GetTransactionsQuantity() (int64, error)
-	ReadTransactionsByAddress(address string, options *postgresdriver.ReadTransactionsByAddressOptions) ([]*indexerlib.Transaction, error)
+	ReadTransactionsByAddress(address string, options *types.ReadTransactionsByAddressOptions) ([]*types.Transaction, error)
 	GetTransactionsQuantityByAddress(address string) (int64, error)
-	ReadTransactionsByHeight(height int, options *postgresdriver.ReadTransactionsByHeightOptions) ([]*indexerlib.Transaction, error)
+	ReadTransactionsByHeight(height int, options *types.ReadTransactionsByHeightOptions) ([]*types.Transaction, error)
 	GetTransactionsQuantityByHeight(height int) (int64, error)
-	ReadTransactionByHash(hash string) (*indexerlib.Transaction, error)
-	ReadBlocks(options *postgresdriver.ReadBlocksOptions) ([]*indexerlib.Block, error)
+	ReadTransactionByHash(hash string) (*types.Transaction, error)
+	ReadBlocks(options *types.ReadBlocksOptions) ([]*types.Block, error)
 	GetBlocksQuantity() (int64, error)
-	ReadBlockByHash(hash string) (*indexerlib.Block, error)
-	ReadBlockByHeight(height int) (*indexerlib.Block, error)
-	ReadAccountByAddress(address string, options *postgresdriver.ReadAccountByAddressOptions) (*indexerlib.Account, error)
-	ReadAccounts(options *postgresdriver.ReadAccountsOptions) ([]*indexerlib.Account, error)
-	GetAccountsQuantity(options *postgresdriver.GetAccountsQuantityOptions) (int64, error)
-	ReadNodeByAddress(address string, options *postgresdriver.ReadNodeByAddressOptions) (*indexerlib.Node, error)
-	ReadNodes(options *postgresdriver.ReadNodesOptions) ([]*indexerlib.Node, error)
-	GetNodesQuantity(options *postgresdriver.GetNodesQuantityOptions) (int64, error)
-	ReadAppByAddress(address string, options *postgresdriver.ReadAppByAddressOptions) (*indexerlib.App, error)
-	ReadApps(options *postgresdriver.ReadAppsOptions) ([]*indexerlib.App, error)
-	GetAppsQuantity(options *postgresdriver.GetAppsQuantityOptions) (int64, error)
+	ReadBlockByHash(hash string) (*types.Block, error)
+	ReadBlockByHeight(height int) (*types.Block, error)
+	ReadAccountByAddress(address string, options *types.ReadAccountByAddressOptions) (*types.Account, error)
+	ReadAccounts(options *types.ReadAccountsOptions) ([]*types.Account, error)
+	GetAccountsQuantity(options *types.GetAccountsQuantityOptions) (int64, error)
+	ReadNodeByAddress(address string, options *types.ReadNodeByAddressOptions) (*types.Node, error)
+	ReadNodes(options *types.ReadNodesOptions) ([]*types.Node, error)
+	GetNodesQuantity(options *types.GetNodesQuantityOptions) (int64, error)
+	ReadAppByAddress(address string, options *types.ReadAppByAddressOptions) (*types.App, error)
+	ReadApps(options *types.ReadAppsOptions) ([]*types.App, error)
+	GetAppsQuantity(options *types.GetAppsQuantityOptions) (int64, error)
 }
 
 func getTotalPages(quantity, perPage int) int {
@@ -53,7 +52,7 @@ func getTotalPages(quantity, perPage int) int {
 	return fullPages
 }
 
-func convertIndexerTransactionToGrapQLTransaction(transaction *indexerlib.Transaction) *model.GraphQLTransaction {
+func convertIndexerTransactionToGrapQLTransaction(transaction *types.Transaction) *model.GraphQLTransaction {
 	return &model.GraphQLTransaction{
 		Hash:            transaction.Hash,
 		FromAddress:     transaction.FromAddress,
@@ -73,7 +72,7 @@ func convertIndexerTransactionToGrapQLTransaction(transaction *indexerlib.Transa
 	}
 }
 
-func convertMultipleIndexerTransactionsToGrapQLTransactions(transactions []*indexerlib.Transaction) []*model.GraphQLTransaction {
+func convertMultipleIndexerTransactionsToGrapQLTransactions(transactions []*types.Transaction) []*model.GraphQLTransaction {
 	graphqlTransactions := []*model.GraphQLTransaction{}
 
 	for _, transaction := range transactions {
@@ -83,7 +82,7 @@ func convertMultipleIndexerTransactionsToGrapQLTransactions(transactions []*inde
 	return graphqlTransactions
 }
 
-func convertIndexerAccountToGraphQLAccount(account *indexerlib.Account) *model.GraphQLAccount {
+func convertIndexerAccountToGraphQLAccount(account *types.Account) *model.GraphQLAccount {
 	return &model.GraphQLAccount{
 		Address:             account.Address,
 		Height:              account.Height,
@@ -92,7 +91,7 @@ func convertIndexerAccountToGraphQLAccount(account *indexerlib.Account) *model.G
 	}
 }
 
-func convertMultipleIndexerAccountToGraphQLAccount(accounts []*indexerlib.Account) []*model.GraphQLAccount {
+func convertMultipleIndexerAccountToGraphQLAccount(accounts []*types.Account) []*model.GraphQLAccount {
 	graphqlAccounts := []*model.GraphQLAccount{}
 
 	for _, account := range accounts {
@@ -102,7 +101,7 @@ func convertMultipleIndexerAccountToGraphQLAccount(accounts []*indexerlib.Accoun
 	return graphqlAccounts
 }
 
-func convertIndexerNodeToGraphQLNode(node *indexerlib.Node) *model.GraphQLNode {
+func convertIndexerNodeToGraphQLNode(node *types.Node) *model.GraphQLNode {
 	return &model.GraphQLNode{
 		Address:    node.Address,
 		Height:     node.Height,
@@ -113,7 +112,7 @@ func convertIndexerNodeToGraphQLNode(node *indexerlib.Node) *model.GraphQLNode {
 	}
 }
 
-func convertMultipleIndexerNodeToGraphQLNode(nodes []*indexerlib.Node) []*model.GraphQLNode {
+func convertMultipleIndexerNodeToGraphQLNode(nodes []*types.Node) []*model.GraphQLNode {
 	graphqlNodes := []*model.GraphQLNode{}
 
 	for _, node := range nodes {
@@ -123,7 +122,7 @@ func convertMultipleIndexerNodeToGraphQLNode(nodes []*indexerlib.Node) []*model.
 	return graphqlNodes
 }
 
-func convertIndexerAppToGraphQLApp(app *indexerlib.App) *model.GraphQLApp {
+func convertIndexerAppToGraphQLApp(app *types.App) *model.GraphQLApp {
 	return &model.GraphQLApp{
 		Address:      app.Address,
 		Height:       app.Height,
@@ -133,7 +132,7 @@ func convertIndexerAppToGraphQLApp(app *indexerlib.App) *model.GraphQLApp {
 	}
 }
 
-func convertMultipleIndexeraAppToGraphQLApp(apps []*indexerlib.App) []*model.GraphQLApp {
+func convertMultipleIndexeraAppToGraphQLApp(apps []*types.App) []*model.GraphQLApp {
 	graphqlApps := []*model.GraphQLApp{}
 
 	for _, app := range apps {

@@ -14,8 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/pokt-foundation/pocket-go/provider"
-	indexer "github.com/pokt-foundation/pocket-indexer-lib"
-	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
+	"github.com/pokt-foundation/pocket-indexer-lib/types"
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -141,11 +140,11 @@ type ComplexityRoot struct {
 		QueryApps                  func(childComplexity int, height *int, page *int, perPage *int) int
 		QueryBlockByHash           func(childComplexity int, hash string) int
 		QueryBlockByHeight         func(childComplexity int, height int) int
-		QueryBlocks                func(childComplexity int, page *int, perPage *int, order *postgresdriver.Order) int
+		QueryBlocks                func(childComplexity int, page *int, perPage *int, order *types.Order) int
 		QueryNodeByAddress         func(childComplexity int, address string, height *int) int
 		QueryNodes                 func(childComplexity int, height *int, page *int, perPage *int) int
 		QueryTransactionByHash     func(childComplexity int, hash string) int
-		QueryTransactions          func(childComplexity int, page *int, perPage *int, order *postgresdriver.Order) int
+		QueryTransactions          func(childComplexity int, page *int, perPage *int, order *types.Order) int
 		QueryTransactionsByAddress func(childComplexity int, address string, page *int, perPage *int) int
 		QueryTransactionsByHeight  func(childComplexity int, height int, page *int, perPage *int) int
 	}
@@ -190,12 +189,12 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	QueryBlockByHash(ctx context.Context, hash string) (*indexer.Block, error)
-	QueryBlockByHeight(ctx context.Context, height int) (*indexer.Block, error)
-	QueryBlocks(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.BlocksResponse, error)
+	QueryBlockByHash(ctx context.Context, hash string) (*types.Block, error)
+	QueryBlockByHeight(ctx context.Context, height int) (*types.Block, error)
+	QueryBlocks(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.BlocksResponse, error)
 	QueryTransactionByHash(ctx context.Context, hash string) (*model.GraphQLTransaction, error)
 	QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error)
-	QueryTransactions(ctx context.Context, page *int, perPage *int, order *postgresdriver.Order) (*model.TransactionsResponse, error)
+	QueryTransactions(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.TransactionsResponse, error)
 	QueryTransactionsByAddress(ctx context.Context, address string, page *int, perPage *int) (*model.TransactionsResponse, error)
 	QueryAccountByAddress(ctx context.Context, address string, height *int) (*model.GraphQLAccount, error)
 	QueryAccounts(ctx context.Context, height *int, page *int, perPage *int) (*model.AccountsResponse, error)
@@ -708,7 +707,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryBlocks(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*postgresdriver.Order)), true
+		return e.complexity.Query.QueryBlocks(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*types.Order)), true
 
 	case "Query.queryNodeByAddress":
 		if e.complexity.Query.QueryNodeByAddress == nil {
@@ -756,7 +755,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*postgresdriver.Order)), true
+		return e.complexity.Query.QueryTransactions(childComplexity, args["page"].(*int), args["perPage"].(*int), args["order"].(*types.Order)), true
 
 	case "Query.queryTransactionsByAddress":
 		if e.complexity.Query.QueryTransactionsByAddress == nil {
@@ -1340,7 +1339,7 @@ func (ec *executionContext) field_Query_queryBlocks_args(ctx context.Context, ra
 		}
 	}
 	args["perPage"] = arg1
-	var arg2 *postgresdriver.Order
+	var arg2 *types.Order
 	if tmp, ok := rawArgs["order"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
 		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
@@ -1511,7 +1510,7 @@ func (ec *executionContext) field_Query_queryTransactions_args(ctx context.Conte
 		}
 	}
 	args["perPage"] = arg1
-	var arg2 *postgresdriver.Order
+	var arg2 *types.Order
 	if tmp, ok := rawArgs["order"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
 		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
@@ -2017,7 +2016,7 @@ func (ec *executionContext) fieldContext_AppsResponse_totalPages(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_hash(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_hash(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_hash(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2061,7 +2060,7 @@ func (ec *executionContext) fieldContext_Block_hash(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_height(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_height(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_height(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2105,7 +2104,7 @@ func (ec *executionContext) fieldContext_Block_height(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_time(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_time(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_time(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2149,7 +2148,7 @@ func (ec *executionContext) fieldContext_Block_time(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_proposerAddress(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_proposerAddress(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_proposerAddress(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2193,7 +2192,7 @@ func (ec *executionContext) fieldContext_Block_proposerAddress(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_txCount(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_txCount(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_txCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2237,7 +2236,7 @@ func (ec *executionContext) fieldContext_Block_txCount(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_txTotal(ctx context.Context, field graphql.CollectedField, obj *indexer.Block) (ret graphql.Marshaler) {
+func (ec *executionContext) _Block_txTotal(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Block_txTotal(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2304,7 +2303,7 @@ func (ec *executionContext) _BlocksResponse_blocks(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*indexer.Block)
+	res := resTmp.([]*types.Block)
 	fc.Result = res
 	return ec.marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
 }
@@ -4197,7 +4196,7 @@ func (ec *executionContext) _Query_queryBlockByHash(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*indexer.Block)
+	res := resTmp.(*types.Block)
 	fc.Result = res
 	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
 }
@@ -4263,7 +4262,7 @@ func (ec *executionContext) _Query_queryBlockByHeight(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*indexer.Block)
+	res := resTmp.(*types.Block)
 	fc.Result = res
 	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
 }
@@ -4320,7 +4319,7 @@ func (ec *executionContext) _Query_queryBlocks(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryBlocks(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*postgresdriver.Order))
+		return ec.resolvers.Query().QueryBlocks(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*types.Order))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4532,7 +4531,7 @@ func (ec *executionContext) _Query_queryTransactions(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*postgresdriver.Order))
+		return ec.resolvers.Query().QueryTransactions(rctx, fc.Args["page"].(*int), fc.Args["perPage"].(*int), fc.Args["order"].(*types.Order))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8095,7 +8094,7 @@ func (ec *executionContext) _AppsResponse(ctx context.Context, sel ast.Selection
 
 var blockImplementors = []string{"Block"}
 
-func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, obj *indexer.Block) graphql.Marshaler {
+func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, obj *types.Block) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, blockImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -9795,7 +9794,7 @@ func (ec *executionContext) marshalOAppsResponse2ᚖgithubᚗcomᚋpoktᚑfounda
 	return ec._AppsResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v []*indexer.Block) graphql.Marshaler {
+func (ec *executionContext) marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v []*types.Block) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -9836,7 +9835,7 @@ func (ec *executionContext) marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundation
 	return ret
 }
 
-func (ec *executionContext) marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v *indexer.Block) graphql.Marshaler {
+func (ec *executionContext) marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v *types.Block) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -10155,16 +10154,16 @@ func (ec *executionContext) marshalONodesResponse2ᚖgithubᚗcomᚋpoktᚑfound
 	return ec._NodesResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, v interface{}) (*postgresdriver.Order, error) {
+func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, v interface{}) (*types.Order, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := postgresdriver.Order(tmp)
+	res := types.Order(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, sel ast.SelectionSet, v *postgresdriver.Order) graphql.Marshaler {
+func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, sel ast.SelectionSet, v *types.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

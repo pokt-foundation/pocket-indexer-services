@@ -9,8 +9,9 @@ import (
 	"time"
 
 	providerlib "github.com/pokt-foundation/pocket-go/provider"
-	indexerlib "github.com/pokt-foundation/pocket-indexer-lib"
+	indexerlib "github.com/pokt-foundation/pocket-indexer-lib/indexer"
 	postgresdriver "github.com/pokt-foundation/pocket-indexer-lib/postgres-driver"
+	"github.com/pokt-foundation/pocket-indexer-lib/types"
 	"github.com/pokt-foundation/utils-go/environment"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
@@ -69,11 +70,11 @@ type provider interface {
 // driver interface of needed functions for the db driver
 type driver interface {
 	GetMaxHeightInBlocks() (int64, error)
-	WriteBlock(block *indexerlib.Block) error
-	WriteTransactions(txs []*indexerlib.Transaction) error
-	WriteAccounts(accounts []*indexerlib.Account) error
-	WriteNodes(nodes []*indexerlib.Node) error
-	WriteApps(apps []*indexerlib.App) error
+	WriteBlock(block *types.Block) error
+	WriteTransactions(txs []*types.Transaction) error
+	WriteAccounts(accounts []*types.Account) error
+	WriteNodes(nodes []*types.Node) error
+	WriteApps(apps []*types.App) error
 }
 
 // service struct handler for all necessary fiels for indexing
