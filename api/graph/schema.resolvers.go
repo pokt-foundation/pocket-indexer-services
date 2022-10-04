@@ -11,12 +11,22 @@ import (
 	"github.com/pokt-foundation/pocket-indexer-services/api/graph/model"
 )
 
-func (r *queryResolver) QueryBlockByHash(ctx context.Context, hash string) (*types.Block, error) {
-	return r.Reader.ReadBlockByHash(hash)
+func (r *queryResolver) QueryBlockByHash(ctx context.Context, hash string) (*model.GraphQLBlock, error) {
+	block, err := r.Reader.ReadBlockByHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertIndexerBlockToGraphQLBlock(block), nil
 }
 
-func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*types.Block, error) {
-	return r.Reader.ReadBlockByHeight(height)
+func (r *queryResolver) QueryBlockByHeight(ctx context.Context, height int) (*model.GraphQLBlock, error) {
+	block, err := r.Reader.ReadBlockByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertIndexerBlockToGraphQLBlock(block), nil
 }
 
 func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.BlocksResponse, error) {
@@ -47,7 +57,7 @@ func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int
 	}
 
 	return &model.BlocksResponse{
-		Blocks:     blocks,
+		Blocks:     convertMultipleIndexerBlockToGraphQLBlock(blocks),
 		Page:       options.Page,
 		TotalCount: int(quantity),
 		PageCount:  len(blocks),

@@ -1,13 +1,17 @@
 scalar Time
 scalar Map
 
-type Block {
+type GraphQLBlock {
   hash: String!
   height: Int!
   time: Time!
   proposerAddress: String!
   txCount: Int!
   txTotal: Int!
+  accountsQuantity: Int!
+  appsQuantity: Int!
+  nodesQuantity: Int!
+  took: String!
 }
 
 type GraphQLTransaction {
@@ -88,7 +92,7 @@ type GraphQLApp {
 }
 
 type BlocksResponse {
-  blocks: [Block]
+  blocks: [GraphQLBlock]
   totalCount: Int!
   pageCount: Int!
   page: Int!
@@ -133,8 +137,8 @@ enum Order {
 }
 
 type Query {
-  queryBlockByHash(hash: String!): Block
-  queryBlockByHeight(height: Int!): Block
+  queryBlockByHash(hash: String!): GraphQLBlock
+  queryBlockByHeight(height: Int!): GraphQLBlock
   queryBlocks(page: Int, perPage: Int, order: Order): BlocksResponse
   queryTransactionByHash(hash: String!): GraphQLTransaction
   queryTransactionsByHeight(

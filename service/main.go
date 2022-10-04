@@ -54,6 +54,7 @@ type indexer interface {
 	IndexBlockNodes(blockHeight int) ([]string, error)
 	IndexBlockApps(blockHeight int) ([]string, error)
 	IndexAccounts(blockHeight int) ([]string, error)
+	IndexBlockCalculatedFields(blockHeight int, getTook bool) error
 }
 
 // provider interface of needed functions in the provider
@@ -75,6 +76,11 @@ type driver interface {
 	WriteAccounts(accounts []*types.Account) error
 	WriteNodes(nodes []*types.Node) error
 	WriteApps(apps []*types.App) error
+	GetAccountsQuantity(options *types.GetAccountsQuantityOptions) (int64, error)
+	GetAppsQuantity(options *types.GetAppsQuantityOptions) (int64, error)
+	GetNodesQuantity(options *types.GetNodesQuantityOptions) (int64, error)
+	ReadBlockByHeight(height int) (*types.Block, error)
+	WriteBlockCalculatedFields(block *types.Block) error
 }
 
 // service struct handler for all necessary fiels for indexing
@@ -220,7 +226,28 @@ func (s *service) indexHeights(heightsToIndex []int) error {
 
 	indexingProcesses.Wait()
 
+	for _, height := range heightsToIndex {
+		indexingProcesses.Add(1)
+
+		err := semaphoreLimiter.Acquire(context.Background(), 1)
+		if err != nil {
+			return err
+		}
+
+		go s.indexBlockCalculatedFields(height, s.getTook(height))
+	}
+
+	indexingProcesses.Wait()
+
 	return nil
+}
+
+func (s *service) getTook(height int) bool {
+	if !s.hasEnd {
+		return true
+	}
+
+	return height != s.fromHeight
 }
 
 func releaseProcess() {
@@ -252,6 +279,39 @@ func (s *service) indexBlockWithRetries(height int, indexer indexer) error {
 
 	for {
 		err = indexer.IndexBlock(height)
+		if err == nil {
+			break
+		}
+
+		retry++
+
+		if retry == s.retries {
+			break
+		}
+	}
+
+	return err
+}
+
+func (s *service) indexBlockCalculatedFields(height int, getTook bool) {
+	defer releaseProcess()
+
+	err := s.indexBlockCalculatedFieldsWithRetries(height, getTook, s.indexer)
+	if err != nil {
+		s.logErrorWithFields("Index block calculated fields failed", height, err)
+
+		return
+	}
+
+	s.logInfoWithFields("Block calculated fields indexed successfully", "", height)
+}
+
+func (s *service) indexBlockCalculatedFieldsWithRetries(height int, getTook bool, indexer indexer) error {
+	var retry int64
+	var err error
+
+	for {
+		err = indexer.IndexBlockCalculatedFields(height, getTook)
 		if err == nil {
 			break
 		}

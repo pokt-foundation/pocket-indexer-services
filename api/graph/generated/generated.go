@@ -61,15 +61,6 @@ type ComplexityRoot struct {
 		TotalPages func(childComplexity int) int
 	}
 
-	Block struct {
-		Hash            func(childComplexity int) int
-		Height          func(childComplexity int) int
-		ProposerAddress func(childComplexity int) int
-		TXCount         func(childComplexity int) int
-		TXTotal         func(childComplexity int) int
-		Time            func(childComplexity int) int
-	}
-
 	BlocksResponse struct {
 		Blocks     func(childComplexity int) int
 		Page       func(childComplexity int) int
@@ -96,6 +87,19 @@ type ComplexityRoot struct {
 		Jailed       func(childComplexity int) int
 		PublicKey    func(childComplexity int) int
 		StakedTokens func(childComplexity int) int
+	}
+
+	GraphQLBlock struct {
+		AccountsQuantity func(childComplexity int) int
+		AppsQuantity     func(childComplexity int) int
+		Hash             func(childComplexity int) int
+		Height           func(childComplexity int) int
+		NodesQuantity    func(childComplexity int) int
+		ProposerAddress  func(childComplexity int) int
+		Time             func(childComplexity int) int
+		Took             func(childComplexity int) int
+		TxCount          func(childComplexity int) int
+		TxTotal          func(childComplexity int) int
 	}
 
 	GraphQLNode struct {
@@ -189,8 +193,8 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	QueryBlockByHash(ctx context.Context, hash string) (*types.Block, error)
-	QueryBlockByHeight(ctx context.Context, height int) (*types.Block, error)
+	QueryBlockByHash(ctx context.Context, hash string) (*model.GraphQLBlock, error)
+	QueryBlockByHeight(ctx context.Context, height int) (*model.GraphQLBlock, error)
 	QueryBlocks(ctx context.Context, page *int, perPage *int, order *types.Order) (*model.BlocksResponse, error)
 	QueryTransactionByHash(ctx context.Context, hash string) (*model.GraphQLTransaction, error)
 	QueryTransactionsByHeight(ctx context.Context, height int, page *int, perPage *int) (*model.TransactionsResponse, error)
@@ -288,48 +292,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AppsResponse.TotalPages(childComplexity), true
-
-	case "Block.hash":
-		if e.complexity.Block.Hash == nil {
-			break
-		}
-
-		return e.complexity.Block.Hash(childComplexity), true
-
-	case "Block.height":
-		if e.complexity.Block.Height == nil {
-			break
-		}
-
-		return e.complexity.Block.Height(childComplexity), true
-
-	case "Block.proposerAddress":
-		if e.complexity.Block.ProposerAddress == nil {
-			break
-		}
-
-		return e.complexity.Block.ProposerAddress(childComplexity), true
-
-	case "Block.txCount":
-		if e.complexity.Block.TXCount == nil {
-			break
-		}
-
-		return e.complexity.Block.TXCount(childComplexity), true
-
-	case "Block.txTotal":
-		if e.complexity.Block.TXTotal == nil {
-			break
-		}
-
-		return e.complexity.Block.TXTotal(childComplexity), true
-
-	case "Block.time":
-		if e.complexity.Block.Time == nil {
-			break
-		}
-
-		return e.complexity.Block.Time(childComplexity), true
 
 	case "BlocksResponse.blocks":
 		if e.complexity.BlocksResponse.Blocks == nil {
@@ -442,6 +404,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GraphQLApp.StakedTokens(childComplexity), true
+
+	case "GraphQLBlock.accountsQuantity":
+		if e.complexity.GraphQLBlock.AccountsQuantity == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.AccountsQuantity(childComplexity), true
+
+	case "GraphQLBlock.appsQuantity":
+		if e.complexity.GraphQLBlock.AppsQuantity == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.AppsQuantity(childComplexity), true
+
+	case "GraphQLBlock.hash":
+		if e.complexity.GraphQLBlock.Hash == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.Hash(childComplexity), true
+
+	case "GraphQLBlock.height":
+		if e.complexity.GraphQLBlock.Height == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.Height(childComplexity), true
+
+	case "GraphQLBlock.nodesQuantity":
+		if e.complexity.GraphQLBlock.NodesQuantity == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.NodesQuantity(childComplexity), true
+
+	case "GraphQLBlock.proposerAddress":
+		if e.complexity.GraphQLBlock.ProposerAddress == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.ProposerAddress(childComplexity), true
+
+	case "GraphQLBlock.time":
+		if e.complexity.GraphQLBlock.Time == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.Time(childComplexity), true
+
+	case "GraphQLBlock.took":
+		if e.complexity.GraphQLBlock.Took == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.Took(childComplexity), true
+
+	case "GraphQLBlock.txCount":
+		if e.complexity.GraphQLBlock.TxCount == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.TxCount(childComplexity), true
+
+	case "GraphQLBlock.txTotal":
+		if e.complexity.GraphQLBlock.TxTotal == nil {
+			break
+		}
+
+		return e.complexity.GraphQLBlock.TxTotal(childComplexity), true
 
 	case "GraphQLNode.address":
 		if e.complexity.GraphQLNode.Address == nil {
@@ -997,13 +1029,17 @@ var sources = []*ast.Source{
 	{Name: "../schema.graphqls", Input: `scalar Time
 scalar Map
 
-type Block {
+type GraphQLBlock {
   hash: String!
   height: Int!
   time: Time!
   proposerAddress: String!
   txCount: Int!
   txTotal: Int!
+  accountsQuantity: Int!
+  appsQuantity: Int!
+  nodesQuantity: Int!
+  took: String!
 }
 
 type GraphQLTransaction {
@@ -1084,7 +1120,7 @@ type GraphQLApp {
 }
 
 type BlocksResponse {
-  blocks: [Block]
+  blocks: [GraphQLBlock]
   totalCount: Int!
   pageCount: Int!
   page: Int!
@@ -1129,8 +1165,8 @@ enum Order {
 }
 
 type Query {
-  queryBlockByHash(hash: String!): Block
-  queryBlockByHeight(height: Int!): Block
+  queryBlockByHash(hash: String!): GraphQLBlock
+  queryBlockByHeight(height: Int!): GraphQLBlock
   queryBlocks(page: Int, perPage: Int, order: Order): BlocksResponse
   queryTransactionByHash(hash: String!): GraphQLTransaction
   queryTransactionsByHeight(
@@ -1342,7 +1378,7 @@ func (ec *executionContext) field_Query_queryBlocks_args(ctx context.Context, ra
 	var arg2 *types.Order
 	if tmp, ok := rawArgs["order"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
-		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
+		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋtypesᚐOrder(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1513,7 +1549,7 @@ func (ec *executionContext) field_Query_queryTransactions_args(ctx context.Conte
 	var arg2 *types.Order
 	if tmp, ok := rawArgs["order"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
-		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx, tmp)
+		arg2, err = ec.unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋtypesᚐOrder(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2016,270 +2052,6 @@ func (ec *executionContext) fieldContext_AppsResponse_totalPages(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Block_hash(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_hash(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Hash, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_hash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Block_height(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_height(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Height, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_height(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Block_time(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_time(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Time, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Block_proposerAddress(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_proposerAddress(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProposerAddress, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_proposerAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Block_txCount(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_txCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TXCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_txCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Block_txTotal(ctx context.Context, field graphql.CollectedField, obj *types.Block) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Block_txTotal(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TXTotal, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Block_txTotal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Block",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _BlocksResponse_blocks(ctx context.Context, field graphql.CollectedField, obj *model.BlocksResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BlocksResponse_blocks(ctx, field)
 	if err != nil {
@@ -2303,9 +2075,9 @@ func (ec *executionContext) _BlocksResponse_blocks(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*types.Block)
+	res := resTmp.([]*model.GraphQLBlock)
 	fc.Result = res
-	return ec.marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+	return ec.marshalOGraphQLBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BlocksResponse_blocks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2317,19 +2089,27 @@ func (ec *executionContext) fieldContext_BlocksResponse_blocks(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "hash":
-				return ec.fieldContext_Block_hash(ctx, field)
+				return ec.fieldContext_GraphQLBlock_hash(ctx, field)
 			case "height":
-				return ec.fieldContext_Block_height(ctx, field)
+				return ec.fieldContext_GraphQLBlock_height(ctx, field)
 			case "time":
-				return ec.fieldContext_Block_time(ctx, field)
+				return ec.fieldContext_GraphQLBlock_time(ctx, field)
 			case "proposerAddress":
-				return ec.fieldContext_Block_proposerAddress(ctx, field)
+				return ec.fieldContext_GraphQLBlock_proposerAddress(ctx, field)
 			case "txCount":
-				return ec.fieldContext_Block_txCount(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txCount(ctx, field)
 			case "txTotal":
-				return ec.fieldContext_Block_txTotal(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txTotal(ctx, field)
+			case "accountsQuantity":
+				return ec.fieldContext_GraphQLBlock_accountsQuantity(ctx, field)
+			case "appsQuantity":
+				return ec.fieldContext_GraphQLBlock_appsQuantity(ctx, field)
+			case "nodesQuantity":
+				return ec.fieldContext_GraphQLBlock_nodesQuantity(ctx, field)
+			case "took":
+				return ec.fieldContext_GraphQLBlock_took(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GraphQLBlock", field.Name)
 		},
 	}
 	return fc, nil
@@ -2985,6 +2765,446 @@ func (ec *executionContext) _GraphQLApp_stakedTokens(ctx context.Context, field 
 func (ec *executionContext) fieldContext_GraphQLApp_stakedTokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "GraphQLApp",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_hash(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_hash(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_hash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_height(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_height(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Height, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_height(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_time(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_proposerAddress(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_proposerAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProposerAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_proposerAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_txCount(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_txCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TxCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_txCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_txTotal(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_txTotal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TxTotal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_txTotal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_accountsQuantity(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_accountsQuantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountsQuantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_accountsQuantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_appsQuantity(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_appsQuantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AppsQuantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_appsQuantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_nodesQuantity(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_nodesQuantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodesQuantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_nodesQuantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _GraphQLBlock_took(ctx context.Context, field graphql.CollectedField, obj *model.GraphQLBlock) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GraphQLBlock_took(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Took, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GraphQLBlock_took(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GraphQLBlock",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4196,9 +4416,9 @@ func (ec *executionContext) _Query_queryBlockByHash(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*types.Block)
+	res := resTmp.(*model.GraphQLBlock)
 	fc.Result = res
-	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+	return ec.marshalOGraphQLBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_queryBlockByHash(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4210,19 +4430,27 @@ func (ec *executionContext) fieldContext_Query_queryBlockByHash(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "hash":
-				return ec.fieldContext_Block_hash(ctx, field)
+				return ec.fieldContext_GraphQLBlock_hash(ctx, field)
 			case "height":
-				return ec.fieldContext_Block_height(ctx, field)
+				return ec.fieldContext_GraphQLBlock_height(ctx, field)
 			case "time":
-				return ec.fieldContext_Block_time(ctx, field)
+				return ec.fieldContext_GraphQLBlock_time(ctx, field)
 			case "proposerAddress":
-				return ec.fieldContext_Block_proposerAddress(ctx, field)
+				return ec.fieldContext_GraphQLBlock_proposerAddress(ctx, field)
 			case "txCount":
-				return ec.fieldContext_Block_txCount(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txCount(ctx, field)
 			case "txTotal":
-				return ec.fieldContext_Block_txTotal(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txTotal(ctx, field)
+			case "accountsQuantity":
+				return ec.fieldContext_GraphQLBlock_accountsQuantity(ctx, field)
+			case "appsQuantity":
+				return ec.fieldContext_GraphQLBlock_appsQuantity(ctx, field)
+			case "nodesQuantity":
+				return ec.fieldContext_GraphQLBlock_nodesQuantity(ctx, field)
+			case "took":
+				return ec.fieldContext_GraphQLBlock_took(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GraphQLBlock", field.Name)
 		},
 	}
 	defer func() {
@@ -4262,9 +4490,9 @@ func (ec *executionContext) _Query_queryBlockByHeight(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*types.Block)
+	res := resTmp.(*model.GraphQLBlock)
 	fc.Result = res
-	return ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, field.Selections, res)
+	return ec.marshalOGraphQLBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_queryBlockByHeight(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4276,19 +4504,27 @@ func (ec *executionContext) fieldContext_Query_queryBlockByHeight(ctx context.Co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "hash":
-				return ec.fieldContext_Block_hash(ctx, field)
+				return ec.fieldContext_GraphQLBlock_hash(ctx, field)
 			case "height":
-				return ec.fieldContext_Block_height(ctx, field)
+				return ec.fieldContext_GraphQLBlock_height(ctx, field)
 			case "time":
-				return ec.fieldContext_Block_time(ctx, field)
+				return ec.fieldContext_GraphQLBlock_time(ctx, field)
 			case "proposerAddress":
-				return ec.fieldContext_Block_proposerAddress(ctx, field)
+				return ec.fieldContext_GraphQLBlock_proposerAddress(ctx, field)
 			case "txCount":
-				return ec.fieldContext_Block_txCount(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txCount(ctx, field)
 			case "txTotal":
-				return ec.fieldContext_Block_txTotal(ctx, field)
+				return ec.fieldContext_GraphQLBlock_txTotal(ctx, field)
+			case "accountsQuantity":
+				return ec.fieldContext_GraphQLBlock_accountsQuantity(ctx, field)
+			case "appsQuantity":
+				return ec.fieldContext_GraphQLBlock_appsQuantity(ctx, field)
+			case "nodesQuantity":
+				return ec.fieldContext_GraphQLBlock_nodesQuantity(ctx, field)
+			case "took":
+				return ec.fieldContext_GraphQLBlock_took(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Block", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type GraphQLBlock", field.Name)
 		},
 	}
 	defer func() {
@@ -8092,69 +8328,6 @@ func (ec *executionContext) _AppsResponse(ctx context.Context, sel ast.Selection
 	return out
 }
 
-var blockImplementors = []string{"Block"}
-
-func (ec *executionContext) _Block(ctx context.Context, sel ast.SelectionSet, obj *types.Block) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, blockImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Block")
-		case "hash":
-
-			out.Values[i] = ec._Block_hash(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "height":
-
-			out.Values[i] = ec._Block_height(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "time":
-
-			out.Values[i] = ec._Block_time(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "proposerAddress":
-
-			out.Values[i] = ec._Block_proposerAddress(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "txCount":
-
-			out.Values[i] = ec._Block_txCount(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "txTotal":
-
-			out.Values[i] = ec._Block_txTotal(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var blocksResponseImplementors = []string{"BlocksResponse"}
 
 func (ec *executionContext) _BlocksResponse(ctx context.Context, sel ast.SelectionSet, obj *model.BlocksResponse) graphql.Marshaler {
@@ -8333,6 +8506,97 @@ func (ec *executionContext) _GraphQLApp(ctx context.Context, sel ast.SelectionSe
 		case "stakedTokens":
 
 			out.Values[i] = ec._GraphQLApp_stakedTokens(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var graphQLBlockImplementors = []string{"GraphQLBlock"}
+
+func (ec *executionContext) _GraphQLBlock(ctx context.Context, sel ast.SelectionSet, obj *model.GraphQLBlock) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, graphQLBlockImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GraphQLBlock")
+		case "hash":
+
+			out.Values[i] = ec._GraphQLBlock_hash(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "height":
+
+			out.Values[i] = ec._GraphQLBlock_height(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "time":
+
+			out.Values[i] = ec._GraphQLBlock_time(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "proposerAddress":
+
+			out.Values[i] = ec._GraphQLBlock_proposerAddress(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "txCount":
+
+			out.Values[i] = ec._GraphQLBlock_txCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "txTotal":
+
+			out.Values[i] = ec._GraphQLBlock_txTotal(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "accountsQuantity":
+
+			out.Values[i] = ec._GraphQLBlock_accountsQuantity(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "appsQuantity":
+
+			out.Values[i] = ec._GraphQLBlock_appsQuantity(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nodesQuantity":
+
+			out.Values[i] = ec._GraphQLBlock_nodesQuantity(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "took":
+
+			out.Values[i] = ec._GraphQLBlock_took(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -9794,54 +10058,6 @@ func (ec *executionContext) marshalOAppsResponse2ᚖgithubᚗcomᚋpoktᚑfounda
 	return ec._AppsResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v []*types.Block) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚐBlock(ctx context.Context, sel ast.SelectionSet, v *types.Block) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Block(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOBlocksResponse2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐBlocksResponse(ctx context.Context, sel ast.SelectionSet, v *model.BlocksResponse) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10019,6 +10235,54 @@ func (ec *executionContext) marshalOGraphQLApp2ᚖgithubᚗcomᚋpoktᚑfoundati
 	return ec._GraphQLApp(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOGraphQLBlock2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx context.Context, sel ast.SelectionSet, v []*model.GraphQLBlock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOGraphQLBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOGraphQLBlock2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLBlock(ctx context.Context, sel ast.SelectionSet, v *model.GraphQLBlock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._GraphQLBlock(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOGraphQLNode2ᚕᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑservicesᚋapiᚋgraphᚋmodelᚐGraphQLNode(ctx context.Context, sel ast.SelectionSet, v []*model.GraphQLNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -10154,7 +10418,7 @@ func (ec *executionContext) marshalONodesResponse2ᚖgithubᚗcomᚋpoktᚑfound
 	return ec._NodesResponse(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, v interface{}) (*types.Order, error) {
+func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋtypesᚐOrder(ctx context.Context, v interface{}) (*types.Order, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -10163,7 +10427,7 @@ func (ec *executionContext) unmarshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundation�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋpostgresᚑdriverᚐOrder(ctx context.Context, sel ast.SelectionSet, v *types.Order) graphql.Marshaler {
+func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpoktᚑfoundationᚋpocketᚑindexerᚑlibᚋtypesᚐOrder(ctx context.Context, sel ast.SelectionSet, v *types.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
