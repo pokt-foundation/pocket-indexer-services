@@ -142,6 +142,31 @@ func convertMultipleIndexeraAppToGraphQLApp(apps []*types.App) []*model.GraphQLA
 	return graphqlApps
 }
 
+func convertIndexerBlockToGraphQLBlock(block *types.Block) *model.GraphQLBlock {
+	return &model.GraphQLBlock{
+		Hash:             block.Hash,
+		Height:           block.Height,
+		Time:             block.Time,
+		ProposerAddress:  block.ProposerAddress,
+		TxCount:          block.TXCount,
+		TxTotal:          block.TXTotal,
+		AccountsQuantity: block.AccountsQuantity,
+		AppsQuantity:     block.AppsQuantity,
+		NodesQuantity:    block.NodesQuantity,
+		Took:             strconv.Itoa(int(block.Took)),
+	}
+}
+
+func convertMultipleIndexeraAppToGraphQLBlock(blocks []*types.Block) []*model.GraphQLBlock {
+	graphqlBlocks := []*model.GraphQLBlock{}
+
+	for _, block := range blocks {
+		graphqlBlocks = append(graphqlBlocks, convertIndexerBlockToGraphQLBlock(block))
+	}
+
+	return graphqlBlocks
+}
+
 // Resolver struct handler for dependency injection to GraphQL operations
 type Resolver struct {
 	Reader reader

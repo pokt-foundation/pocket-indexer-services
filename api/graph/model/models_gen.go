@@ -3,8 +3,9 @@
 package model
 
 import (
+	"time"
+
 	"github.com/pokt-foundation/pocket-go/provider"
-	"github.com/pokt-foundation/pocket-indexer-lib/types"
 )
 
 type AccountsResponse struct {
@@ -24,11 +25,11 @@ type AppsResponse struct {
 }
 
 type BlocksResponse struct {
-	Blocks     []*types.Block `json:"blocks"`
-	TotalCount int              `json:"totalCount"`
-	PageCount  int              `json:"pageCount"`
-	Page       int              `json:"page"`
-	TotalPages int              `json:"totalPages"`
+	Blocks     []*GraphQLBlock `json:"blocks"`
+	TotalCount int             `json:"totalCount"`
+	PageCount  int             `json:"pageCount"`
+	Page       int             `json:"page"`
+	TotalPages int             `json:"totalPages"`
 }
 
 type GraphQLAccount struct {
@@ -44,6 +45,19 @@ type GraphQLApp struct {
 	Jailed       bool   `json:"jailed"`
 	PublicKey    string `json:"publicKey"`
 	StakedTokens string `json:"stakedTokens"`
+}
+
+type GraphQLBlock struct {
+	Hash             string    `json:"hash"`
+	Height           int       `json:"height"`
+	Time             time.Time `json:"time"`
+	ProposerAddress  string    `json:"proposerAddress"`
+	TxCount          int       `json:"txCount"`
+	TxTotal          int       `json:"txTotal"`
+	AccountsQuantity int       `json:"accountsQuantity"`
+	AppsQuantity     int       `json:"appsQuantity"`
+	NodesQuantity    int       `json:"nodesQuantity"`
+	Took             string    `json:"took"`
 }
 
 type GraphQLNode struct {
