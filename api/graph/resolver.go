@@ -157,7 +157,7 @@ func convertIndexerBlockToGraphQLBlock(block *types.Block) *model.GraphQLBlock {
 	}
 }
 
-func convertMultipleIndexeraAppToGraphQLBlock(blocks []*types.Block) []*model.GraphQLBlock {
+func convertMultipleIndexerBlockToGraphQLBlock(blocks []*types.Block) []*model.GraphQLBlock {
 	graphqlBlocks := []*model.GraphQLBlock{}
 
 	for _, block := range blocks {

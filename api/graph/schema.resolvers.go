@@ -57,7 +57,7 @@ func (r *queryResolver) QueryBlocks(ctx context.Context, page *int, perPage *int
 	}
 
 	return &model.BlocksResponse{
-		Blocks:     convertMultipleIndexeraAppToGraphQLBlock(blocks),
+		Blocks:     convertMultipleIndexerBlockToGraphQLBlock(blocks),
 		Page:       options.Page,
 		TotalCount: int(quantity),
 		PageCount:  len(blocks),
